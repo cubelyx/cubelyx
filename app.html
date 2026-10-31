@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark"><meta name="theme-color" content="#000000"><title>Cubelyx</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#000;--surface:#111418;--ink:#EDEFF1;--muted:#9AA6B0;--line:#2A323A;--track:#232B33;--accent:#4C9AFF;--on:#041018;--ok:#3CC3A4;--warn:#E7A23A;--bad:#FF7A6E;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.45 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:0;line-height:1.1}
+h1{font-size:46px;font-weight:700;letter-spacing:.01em}
+h2{font-size:24px;font-weight:600;margin:22px 0 8px}
+h3{font-size:26px;font-weight:700}
+.lead{color:var(--muted);margin:6px 0 18px}
+.muted{color:var(--muted);font-size:15px}
+.err{color:var(--bad);font-weight:500}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.drop{display:block;border:2px dashed var(--line);border-radius:6px;padding:26px 16px;background:var(--surface);cursor:pointer}
+.drop:focus-within{outline:3px solid var(--accent)}
+.drop .big{display:block;font:700 28px/1.1 "Barlow Condensed","Arial Narrow",sans-serif}
+details{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-top:16px}
+summary{font:600 20px "Barlow Condensed","Arial Narrow",sans-serif;cursor:pointer;min-height:28px}
+details h2{font-size:21px;margin:16px 0 6px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:15px;color:var(--muted)}
+select,input{display:block;width:100%;min-height:44px;margin-top:3px;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px 8px}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+#list,#mysel{list-style:none;margin:10px 0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+#list li,#mysel li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+#list li:first-child,#mysel li:first-child{border-top:0}
+.nm b{display:block;font-weight:600;word-break:break-word}
+.st{display:flex;gap:6px;flex:none}
+.st button{width:44px;height:44px;font-size:22px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:5px}
+.st input{width:60px;margin:0;text-align:center}
+#go{width:100%;min-height:52px;margin-top:6px;font:700 22px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.02em;background:var(--accent);color:var(--on);border:0;border-radius:6px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;margin-top:14px}
+.bh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.bh span{color:var(--muted);font-size:15px;text-align:right}
+.gl{display:flex;justify-content:space-between;font-size:15px}
+.gl b.warn{color:var(--warn)}.gl b.bad{color:var(--bad)}
+.gauge{height:14px;background:var(--track);border-radius:3px;overflow:hidden;position:relative;margin:4px 0 12px}
+.gauge::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),var(--surface) calc(10% - 2px) 10%)}
+.gauge i{display:block;height:100%;background:var(--ok)}
+.gauge.v i{background:var(--accent)}.gauge.warn i{background:var(--warn)}.gauge.bad i{background:var(--bad)}
+.box ul{list-style:none;margin:6px 0 0;padding:0}
+.box li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--line);font-size:16px}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;margin-bottom:6px}
+#mb{min-height:44px;padding:0 16px;font:600 20px "Barlow Condensed","Arial Narrow",sans-serif;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+#mn{position:absolute;right:0;top:54px;z-index:5;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+#mn button{display:block;width:100%;min-height:46px;text-align:left;padding:0 12px;font:500 18px "Barlow",system-ui,sans-serif;color:var(--ink);background:none;border:0;border-radius:5px}
+#mn button[aria-current="true"]{background:var(--bg);font-weight:600}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:12px 0}
+.seg button{min-height:44px;font:600 18px "Barlow Condensed","Arial Narrow",sans-serif;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px}
+.seg button[aria-selected="true"]{background:var(--accent);color:var(--on);border-color:var(--accent)}
+h1 small{font:600 15px "Barlow",system-ui,sans-serif;color:var(--accent);border:1px solid currentColor;border-radius:4px;padding:1px 7px;margin-left:8px;letter-spacing:.04em;vertical-align:middle}
+.ic{width:44px;height:50px;flex:none}
+.ic polygon{stroke:var(--surface);stroke-width:.6;stroke-linejoin:round}
+.ic .t{fill:var(--accent);opacity:.55}.ic .r{fill:var(--accent);opacity:.85}.ic .l{fill:var(--accent);opacity:.3}
+#list .nm,#mysel .nm{flex:1;min-width:0}
+.anim{display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 0;color:var(--muted)}
+.anim svg{width:132px;height:132px;overflow:visible}
+.anim .cb{fill:var(--accent);fill-opacity:.14}
+.anim .cf{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.anim rect{fill:var(--accent);stroke:var(--surface);stroke-width:1.5;animation:drop 1.4s cubic-bezier(.3,.8,.3,1) infinite both}
+.anim .i1{fill-opacity:.9}.anim .i2{fill-opacity:.6;animation-delay:.2s}.anim .i3{fill-opacity:.35;animation-delay:.4s}
+@keyframes drop{0%{transform:translateY(-80px);opacity:0}18%{opacity:1}50%{transform:translateY(0)}60%{transform:translateY(-5px)}70%,88%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes fillw{from{transform:scaleX(0)}}
+.box{animation:rise .45s ease both;animation-delay:calc(var(--i,0)*90ms)}
+.box .gauge i{transform-origin:left center;animation:fillw .9s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*90ms + 250ms)}
+@media (prefers-reduced-motion:reduce){.anim *,.box,.box .gauge i,.pl .it{animation:none!important}}
+.pl{display:block;width:100%;max-width:340px;height:auto;margin:2px auto 12px}
+.pl .fl{fill:var(--track)}.pl .bw{fill:var(--bg);stroke:var(--line);stroke-width:1}
+.pl .t{fill:hsl(var(--h) 62% 72%)}.pl .r{fill:hsl(var(--h) 56% 56%)}.pl .l{fill:hsl(var(--h) 52% 42%)}
+.pl .it polygon{stroke:var(--surface);stroke-width:.8;stroke-linejoin:round}
+.pl .it{animation:drop2 .5s cubic-bezier(.3,.8,.3,1) both;animation-delay:calc(var(--i,0)*90ms + 400ms + var(--n,0)*60ms)}
+.pl .fr{fill:none;stroke:var(--muted);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+@keyframes drop2{from{opacity:0;transform:translateY(-24px)}}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;background:hsl(var(--h) 56% 56%)}
+.note{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;padding:10px 12px;margin:6px 0 4px;font-size:15px;color:var(--muted)}
+.note .ic{width:34px;height:38px}.note p{margin:0}
+select.cat{display:block;width:auto;min-height:40px;margin-top:6px;padding:4px 8px;font-size:15px}
+.tp{display:block;font-size:15px;color:var(--ink)}
+.box details{border:0;padding:0;margin-top:8px;background:none}
+.box summary{font:600 17px "Barlow",system-ui,sans-serif;min-height:44px;display:flex;align-items:center}
+.box li .muted{display:inline-block;margin-top:2px}
+#splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);animation:spout .4s ease 1.45s forwards;cursor:pointer}
+#splash .sc{width:150px;height:150px;overflow:visible;animation:glow .9s ease .9s both}
+#splash polygon{stroke:var(--bg);stroke-width:1.4;stroke-linejoin:round}
+#splash .px{animation:fly .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d);--dx:0px;--dy:16px}
+#splash .pd{animation:dropin .75s cubic-bezier(.3,.9,.4,1) .6s both}
+@keyframes dropin{0%{opacity:0;transform:translateY(-80px)}20%{opacity:1}72%{transform:translateY(4px)}100%{transform:translateY(0)}}
+#splash .wm{display:flex;font:700 38px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.3em;margin-right:-.3em;color:var(--ink)}
+#splash .wm span{display:inline-block;animation:lt .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.55s + var(--n)*55ms)}
+#splash .wm span:last-child{color:var(--accent)}
+#splash .sl{height:2px;width:0;background:var(--accent);border-radius:1px;animation:ln .6s ease .95s forwards}
+#splash .spv{color:var(--muted);font-size:14px;letter-spacing:.12em;animation:lt .5s ease 1.05s both}
+@keyframes fly{from{opacity:0;transform:translate(var(--dx),var(--dy))}}
+@keyframes lt{from{opacity:0;transform:translateY(12px)}}
+@keyframes ln{to{width:120px}}
+@keyframes glow{0%,55%{filter:none}75%{filter:drop-shadow(0 0 16px rgba(76,154,255,.65))}100%{filter:drop-shadow(0 0 6px rgba(76,154,255,.35))}}
+@keyframes spout{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){#splash{display:none}}
+.top h1{display:flex;align-items:center;gap:10px}
+#bar{position:sticky;bottom:0;z-index:4;background:var(--bg);border-top:1px solid var(--line);margin-top:10px;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px))}
+#bar .muted{margin:0 0 6px}
+.act{display:flex;gap:8px}
+#bar #go{flex:1;margin-top:0}
+#clr{flex:none;min-width:88px;min-height:52px;padding:0 14px;font:600 20px "Barlow Condensed","Arial Narrow",sans-serif;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+#clr.sure{background:var(--bad);border-color:var(--bad);color:#000}
+#clr:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.sec{width:100%;min-height:48px;margin-top:12px;font:600 20px "Barlow Condensed","Arial Narrow",sans-serif;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+.tb{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+.tb button{flex:1;min-width:30%;min-height:48px;font:600 19px "Barlow Condensed","Arial Narrow",sans-serif;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+.tb button:first-child{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.box>summary{list-style:none;cursor:pointer;min-height:44px;margin-bottom:0}
+.box>summary::-webkit-details-marker{display:none}
+.box>summary::after{content:"▾";margin-left:10px;color:var(--muted);transition:transform .2s}
+.box[open]>summary::after{transform:rotate(180deg)}
+.bh .sm{text-align:right}
+.sec:focus-visible,.tb button:focus-visible,.box>summary:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+select{accent-color:#4C9AFF}
+select option{background-color:#111418;color:#EDEFF1}
+select option:hover,select option:focus,select option:checked{background-color:#4C9AFF;color:#041018}
+select option:checked{background:#4C9AFF linear-gradient(#4C9AFF,#4C9AFF)}
+.devis{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:6px;padding:12px 14px;margin-top:14px}
+.devis h3{font-size:24px}
+.devis p{margin:8px 0}
+.devis textarea{display:block;width:100%;font:15px/1.4 "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px;resize:vertical}
+.chk{display:flex;align-items:center;gap:8px;margin-top:6px;min-height:44px;font-size:15px;color:var(--muted)}
+.chk input{width:22px;height:22px;min-height:0;margin:0;flex:none;accent-color:#4C9AFF}
+.note.wn{border-left-color:var(--warn)}
+.note .wi{font-size:26px;color:var(--warn);flex:none}
+#pst{display:block;width:100%;min-height:140px;font:16px/1.4 "Barlow",system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px;resize:vertical}
+.pl .nb{fill:#fff;stroke:#000;stroke-width:2.4px;paint-order:stroke;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.no{color:var(--accent);margin-right:4px;font-weight:600}
+#histl{list-style:none;margin:10px 0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+#histl li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+#histl li:first-child{border-top:0}
+#histl .nm{flex:1;min-width:0}
+#histl .st button{width:auto;min-width:44px;padding:0 12px;font-size:16px}
+#mn a{display:block;min-height:46px;line-height:46px;padding:0 12px;color:var(--ink);text-decoration:none;font:500 18px "Barlow",system-ui,sans-serif;border-radius:5px}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:15px;text-align:center}
+.lnk{display:block;background:none;border:0;color:var(--accent);font:inherit;font-size:16px;min-height:44px;padding:0;margin-top:4px}
+#mb:focus-visible,#mn button:focus-visible,.seg button:focus-visible,.lnk:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+</style>
+</head>
+<body>
+<div id="splash" aria-hidden="true">
+<svg class="sc" viewBox="0 0 150 150"><polygon class="px" style="--d:0.0s" points="75.0,47.6 27.6,75.0 11.0,39.4 58.4,12.0" fill="#3F7FE0"></polygon><polygon class="px" style="--d:0.05s" points="75.0,47.6 122.4,75.0 139.0,39.4 91.6,12.0" fill="#5BA3FF"></polygon><polygon class="px" style="--d:0.1s" points="75.0,83.2 27.6,110.6 27.6,75.0 75.0,47.6" fill="#12254A"></polygon><polygon class="px" style="--d:0.15s" points="75.0,83.2 122.4,110.6 122.4,75.0 75.0,47.6" fill="#0E1D3C"></polygon><polygon class="px" style="--d:0.2s" points="75.0,83.2 122.4,110.6 75.0,138.0 27.6,110.6" fill="#0A1426"></polygon><g class="pd"><polygon points="75.0,44.9 96.3,57.2 75.0,69.5 53.7,57.2" fill="#EAF4FF"></polygon><polygon points="96.3,81.8 75.0,94.2 75.0,69.5 96.3,57.2" fill="#A9D1FF"></polygon><polygon points="53.7,81.8 75.0,94.2 75.0,69.5 53.7,57.2" fill="#6FA8F0"></polygon></g><polygon class="px" style="--d:0.3s" points="122.4,110.6 75.0,138.0 75.0,102.4 122.4,75.0" fill="#4C9AFF"></polygon><polygon class="px" style="--d:0.35s" points="27.6,110.6 75.0,138.0 75.0,102.4 27.6,75.0" fill="#2C66CC"></polygon></svg>
+<div class="wm"><span style="--n:0">C</span><span style="--n:1">U</span><span style="--n:2">B</span><span style="--n:3">E</span><span style="--n:4">L</span><span style="--n:5">Y</span><span style="--n:6">X</span></div>
+<div class="sl"></div><div class="spv" id="spv"></div>
+</div>
+<main>
+<div class="top"><h1><svg width="42" height="42" viewBox="0 0 150 150" role="img" aria-label="Logo Cubelyx" style="display:block;flex:none"><polygon points="75.0,47.6 27.6,75.0 11.0,39.4 58.4,12.0" fill="#3F7FE0" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,47.6 122.4,75.0 139.0,39.4 91.6,12.0" fill="#5BA3FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 27.6,110.6 27.6,75.0 75.0,47.6" fill="#12254A" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 122.4,110.6 122.4,75.0 75.0,47.6" fill="#0E1D3C" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 122.4,110.6 75.0,138.0 27.6,110.6" fill="#0A1426" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,44.9 96.3,57.2 75.0,69.5 53.7,57.2" fill="#EAF4FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="96.3,81.8 75.0,94.2 75.0,69.5 96.3,57.2" fill="#A9D1FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="53.7,81.8 75.0,94.2 75.0,69.5 53.7,57.2" fill="#6FA8F0" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="122.4,110.6 75.0,138.0 75.0,102.4 122.4,75.0" fill="#4C9AFF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="27.6,110.6 75.0,138.0 75.0,102.4 27.6,75.0" fill="#2C66CC" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon></svg>Cubelyx<small id="vb"></small></h1><button id="mb" type="button" aria-expanded="false" aria-controls="mn">Menu ▾</button>
+<div id="mn" hidden><button type="button" data-v="add">Ajout d’article</button><button type="button" data-v="res">Mes colis</button><button type="button" data-v="hist">Historique</button><a id="adm" href="/admin.html" hidden>Administration</a><a href="/login.html?change=1">Mon mot de passe</a><button type="button" id="lo">Se déconnecter</button></div></div>
+<select id="clsel" aria-label="Client" hidden style="margin-bottom:8px"></select>
+<section data-v="add">
+<h2>Ajout d’article</h2>
+<div class="seg" role="tablist"><button type="button" role="tab" data-t="pick" aria-selected="true">Choisir</button><button type="button" role="tab" data-t="imp" aria-selected="false">Importer Excel</button><button type="button" role="tab" data-t="own" aria-selected="false">Hors liste</button><button type="button" role="tab" data-t="pst" aria-selected="false">Coller</button></div>
+<div data-t="pick"><input id="q" type="search" placeholder="Rechercher un code ou un nom d’article"><ul id="list"></ul></div>
+<div data-t="imp" hidden>
+<label class="drop" for="file"><span class="big">Choisir un fichier Excel</span><span class="muted">Deux colonnes : code de l’article et quantité</span></label>
+<input class="vh" id="file" type="file" accept=".xlsx,.xls,.csv">
+<p id="imsg" class="muted" role="status"></p></div>
+<div data-t="own" hidden>
+<p class="muted">Article absent de la liste : saisis ses dimensions et son poids.</p>
+<div class="cols">
+<label>Nom ou référence<input id="o_n" type="text" autocomplete="off"></label>
+<label>Catégorie<select id="o_c"><option value="autre">Autre</option><option value="chra">CHRA</option><option value="turbo">Turbo</option></select></label>
+<label>Longueur (mm)<input id="o_L" type="number" inputmode="decimal"></label>
+<label>Largeur (mm)<input id="o_W" type="number" inputmode="decimal"></label>
+<label>Hauteur (mm)<input id="o_H" type="number" inputmode="decimal"></label>
+<label>Poids (kg)<input id="o_P" type="number" inputmode="decimal"></label>
+<label>Quantité<input id="o_q" type="number" inputmode="numeric" value="1"></label>
+</div>
+<button id="o_add" class="sec" type="button">Ajouter à ma sélection</button>
+<p id="o_msg" class="muted" role="status"></p>
+</div>
+<div data-t="pst" hidden>
+<p class="muted">Colle ta commande : un article par ligne, avec le code puis la quantité (espace, tabulation, « ; » ou « x »). Un bon de préparation copié en entier fonctionne aussi.</p>
+<textarea id="pst" rows="7" placeholder="8G12-30M-796 1&#10;2090-010-170 x2" aria-label="Commande à coller"></textarea>
+<button id="pst_add" class="sec" type="button">Ajouter à ma sélection</button>
+<p id="pst_msg" class="muted" role="status"></p>
+</div>
+<h2>Ma sélection</h2>
+<ul id="mysel"></ul>
+<div id="bar"><p id="sel" class="muted"></p><div class="act"><button id="go" type="button">Répartir en colis</button><button id="clr" type="button" aria-label="Vider la sélection">Vider</button></div></div>
+</section>
+<section data-v="res" hidden><h2>Mes colis</h2><div id="res" aria-live="polite"><p class="muted">Ajoute des articles puis lance la répartition.</p></div></section>
+<section data-v="hist" hidden><h2>Historique</h2><p class="muted">Tes dernières commandes calculées, gardées sur ce téléphone.</p><ul id="histl"></ul><button id="histclr" class="sec" type="button">Effacer l’historique</button></section>
+<div hidden><input id="maxw"><input id="fill"><input id="tare"><input id="palmin"><p id="cat"></p></div>
+<footer><span id="ver"></span><br>by Bastien Guillot</footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

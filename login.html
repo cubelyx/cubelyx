@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#000000">
+<title>Cubelyx – connexion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#000;--surface:#111418;--ink:#EDEFF1;--muted:#9AA6B0;--line:#2A323A;--accent:#4C9AFF;--on:#041018;--bad:#FF7A6E;--ok:#3CC3A4;box-sizing:border-box}
+*{box-sizing:inherit}[hidden]{display:none!important}
+html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.45 "Barlow",system-ui,sans-serif;min-height:100vh}
+main{max-width:420px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin:8px 0 22px}.brand span{font:700 40px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.28em}.brand b{color:var(--accent)}
+h1{font:700 28px "Barlow Condensed","Arial Narrow",sans-serif;margin:0 0 12px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px}
+label{display:block;color:var(--muted);font-size:15px;margin-top:12px}
+input{display:block;width:100%;min-height:48px;margin-top:4px;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px 10px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+button.p{width:100%;min-height:52px;margin-top:16px;font:700 22px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.02em;background:var(--accent);color:var(--on);border:0;border-radius:6px}
+button.l{background:none;border:0;color:var(--accent);font:inherit;min-height:44px;margin-top:6px;padding:0}
+.m{min-height:24px;margin:10px 0 0;font-size:15px}.bad{color:var(--bad)}.ok{color:var(--ok)}.hint{color:var(--muted);font-size:14px;margin:6px 0 0}
+</style></head><body><main>
+<div class="brand"><svg width="56" height="56" viewBox="0 0 150 150" role="img" aria-label="Logo Cubelyx" style="display:block;flex:none"><polygon points="75.0,47.6 27.6,75.0 11.0,39.4 58.4,12.0" fill="#3F7FE0" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,47.6 122.4,75.0 139.0,39.4 91.6,12.0" fill="#5BA3FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 27.6,110.6 27.6,75.0 75.0,47.6" fill="#12254A" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 122.4,110.6 122.4,75.0 75.0,47.6" fill="#0E1D3C" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,83.2 122.4,110.6 75.0,138.0 27.6,110.6" fill="#0A1426" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="75.0,44.9 96.3,57.2 75.0,69.5 53.7,57.2" fill="#EAF4FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="96.3,81.8 75.0,94.2 75.0,69.5 96.3,57.2" fill="#A9D1FF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="53.7,81.8 75.0,94.2 75.0,69.5 53.7,57.2" fill="#6FA8F0" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="122.4,110.6 75.0,138.0 75.0,102.4 122.4,75.0" fill="#4C9AFF" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon><polygon points="27.6,110.6 75.0,138.0 75.0,102.4 27.6,75.0" fill="#2C66CC" stroke="#000000" stroke-width="1.4" stroke-linejoin="round"></polygon></svg><span>CUBELY<b>X</b></span></div>
+<section id="pl"><h1>Connexion</h1>
+<form id="fl" autocomplete="on"><label>Adresse e-mail<input id="le" type="email" autocomplete="username" required></label>
+<label>Mot de passe<input id="lp" type="password" autocomplete="current-password" required></label>
+<button class="p" type="submit">Se connecter</button><p id="ml" class="m bad" role="alert"></p></form>
+<button class="l" id="gr" type="button">Pas encore de compte ? Demander un accès</button></section>
+<section id="pr" hidden><h1>Demander un accès</h1>
+<form id="fr"><label>Nom et prénom<input id="rn" type="text" autocomplete="name" required maxlength="80"></label>
+<label>Adresse e-mail<input id="re" type="email" autocomplete="email" required></label>
+<p class="hint">Ta demande est validée par l’administrateur, qui te communique ensuite un mot de passe provisoire à changer dès ta première connexion.</p>
+<button class="p" type="submit">Envoyer la demande</button><p id="mr" class="m" role="status"></p></form>
+<button class="l" id="gl" type="button">Retour à la connexion</button></section>
+<section id="pc" hidden><h1>Choisis ton mot de passe</h1>
+<form id="fc"><input type="text" autocomplete="username" hidden>
+<label>Mot de passe actuel ou provisoire<input id="cc" type="password" autocomplete="current-password" required></label>
+<label>Nouveau mot de passe<input id="cn" type="password" autocomplete="new-password" required minlength="12"></label>
+<label>Confirmer le nouveau mot de passe<input id="cf" type="password" autocomplete="new-password" required minlength="12"></label>
+<p class="hint">12 caractères minimum, avec au moins 3 types parmi : minuscules, majuscules, chiffres, symboles.</p>
+<button class="p" type="submit">Enregistrer</button><p id="mc" class="m" role="alert"></p></form></section>
+</main><script src="/login.js"></script></body></html>
