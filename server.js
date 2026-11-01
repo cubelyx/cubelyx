@@ -246,7 +246,7 @@ function createServer(db, opts = {}) {
 
 async function main() {
   const url = process.env.DATABASE_URL; if (!url) { console.error("DATABASE_URL manquant."); process.exit(1); }
-  const prod = process.env.NODE_ENV === "production", db = dbm.pgAdapter(url, process.env.PGSSL);
+  const prod = process.env.NODE_ENV === "production", db = await dbm.connect(url, process.env.PGSSL);
   await dbm.init(db); await auth.init();
   if (await bootstrap(db, process.env)) console.log("Compte modérateur créé : connecte-toi puis change le mot de passe.");
   createServer(db, { prod }).listen(process.env.PORT || 3000, () => console.log("Cubelyx prêt."));

@@ -34,4 +34,15 @@ function sqliteAdapter(file) {                           // uniquement pour les 
   return { query: q, async tx(fn) { d.exec("BEGIN"); try { const r = await fn({ query: q }); d.exec("COMMIT"); return r; } catch (e) { d.exec("ROLLBACK"); throw e; } }, close: () => d.close() };
 }
 async function init(db) { for (const s of SCHEMA) await db.query(s); }
-module.exports = { pgAdapter, sqliteAdapter, init };
+// Connexion : adresse externe (avec un point dans le nom) = chiffrée ; adresse interne Render = on essaie sans, puis avec.
+async function connect(url, mode) {
+  const host = new URL(url).hostname;
+  const tries = mode === "disable" ? ["disable"] : mode === "require" ? ["require"] : host.includes(".") ? ["require"] : ["disable", "require"];
+  let last;
+  for (const m of tries) {
+    const db = pgAdapter(url, m);
+    try { await db.query("SELECT 1"); return db; } catch (e) { last = e; try { await db.close(); } catch (x) {} }
+  }
+  throw new Error("Connexion à la base impossible : " + (last && last.message));
+}
+module.exports = { pgAdapter, sqliteAdapter, init, connect };
