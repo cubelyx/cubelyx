@@ -418,10 +418,8 @@ view("add");renderList();
 // ---- compte, modérateur, déconnexion
 ["maxw","fill","tare","palmin"].forEach(k=>{$(k).value=D.settings[k]});
 $("lo").onclick=async()=>{try{await fetch("/api/logout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(e){}location.href="login.html"};
+if(D.client&&D.client.name&&$("cl-name")){$("cl-name").textContent=D.client.name;}
 if(D.role==="moderator"){
   $("adm").hidden=false;
-  try{const cl=(await (await fetch("/api/admin/clients")).json()).clients||[],sel=$("clsel");
-    sel.innerHTML=cl.map(c=>`<option value="${esc(c.id)}"${D.client&&D.client.id===c.id?" selected":""}>${esc(c.name)}</option>`).join("");
-    sel.hidden=!cl.length;sel.onchange=()=>{location.search="?client="+encodeURIComponent(sel.value)}}catch(e){}
 }
 })();

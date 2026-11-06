@@ -53,8 +53,7 @@
       }
     ],
     clients: [
-      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", created_at: Date.now() },
-      { id: "cl_std", name: "Client Général", devis_email: "cubelyx.dev@gmail.com", created_at: Date.now() }
+      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", created_at: Date.now() }
     ],
     settings: {
       maxw: 25,
