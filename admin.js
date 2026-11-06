@@ -5,7 +5,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 async function api(method,path,body){
   const r=await fetch(path,{method,credentials:"same-origin",headers:{"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});
   let d={};try{d=await r.json()}catch(e){}
-  if(r.status===401||(r.status===403&&d.error==="must_change")){location.href="/login.html";throw new Error("auth")}
+  if(r.status===401||(r.status===403&&d.error==="must_change")){location.href="login.html";throw new Error("auth")}
   return{s:r.status,d};
 }
 const fdate=t=>t?new Date(t).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"jamais";
@@ -13,7 +13,7 @@ let clients=[];
 function showProv(email,prov,h){$("pu").textContent=email;$("pc").textContent=prov;$("ph").textContent=h||72;$("prov").hidden=false;$("prov").scrollIntoView()}
 $("pclose").onclick=()=>{$("prov").hidden=true;$("pc").textContent=""};
 $("pcopy").onclick=async()=>{try{await navigator.clipboard.writeText($("pc").textContent);$("pcopy").textContent="Copié"}catch(e){$("pcopy").textContent="Sélectionne le code et copie-le"}};
-$("lo").onclick=async()=>{try{await api("POST","/api/logout",{})}catch(e){}location.href="/login.html"};
+$("lo").onclick=async()=>{try{await api("POST","/api/logout",{})}catch(e){}location.href="login.html"};
 async function load(){
   clients=(await api("GET","/api/admin/clients")).d.clients||[];
   const users=(await api("GET","/api/admin/users")).d.users||[];

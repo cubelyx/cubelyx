@@ -7,7 +7,7 @@ async function post(path,body){
     let d={};try{d=await r.json()}catch(e){}return{s:r.status,d}}
   catch(e){return{s:0,d:{message:"Connexion au serveur impossible."}}}
 }
-const go=role=>{location.href=role==="moderator"?"/admin.html":"/app.html"};
+const go=role=>{location.href=role==="moderator"?"admin.html":"app.html"};
 $("gr").onclick=()=>show("pr");$("gl").onclick=()=>show("pl");
 $("fl").addEventListener("submit",async e=>{
   e.preventDefault();$("ml").textContent="";

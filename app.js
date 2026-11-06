@@ -1,6 +1,6 @@
 (async()=>{
 const resp=await fetch("/api/catalog"+location.search,{credentials:"same-origin"});
-if(resp.status===401||resp.status===403){location.replace("/login.html"+(resp.status===403?"?change=1":""));return}
+if(resp.status===401||resp.status===403){location.replace("login.html"+(resp.status===403?"?change=1":""));return}
 const D=await resp.json();
 const SK=D.user+"."+(D.client?D.client.id:"-");
 function saveFile(name,data,mime){const u=URL.createObjectURL(new Blob([data],{type:mime})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},1500)}
@@ -417,7 +417,7 @@ view("add");renderList();
 
 // ---- compte, modérateur, déconnexion
 ["maxw","fill","tare","palmin"].forEach(k=>{$(k).value=D.settings[k]});
-$("lo").onclick=async()=>{try{await fetch("/api/logout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(e){}location.href="/login.html"};
+$("lo").onclick=async()=>{try{await fetch("/api/logout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(e){}location.href="login.html"};
 if(D.role==="moderator"){
   $("adm").hidden=false;
   try{const cl=(await (await fetch("/api/admin/clients")).json()).clients||[],sel=$("clsel");

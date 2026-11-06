@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <title>Cubelyx</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000;
+      --surface: #111418;
+      --ink: #edeff1;
+      --muted: #9aa6b0;
+      --accent: #4c9aff;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Barlow', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .sc {
+      width: 130px;
+      height: 130px;
+      overflow: visible;
+      animation: glow 1s ease infinite alternate;
+    }
+    .wm {
+      font: 700 36px/1 "Barlow Condensed", system-ui, sans-serif;
+      letter-spacing: .3em;
+      margin-right: -.3em;
+      color: var(--ink);
+    }
+    .wm span:last-child {
+      color: var(--accent);
+    }
+    .msg {
+      color: var(--muted);
+      font-size: 15px;
+      letter-spacing: .08em;
+      margin-top: 8px;
+    }
+    @keyframes glow {
+      from { filter: drop-shadow(0 0 4px rgba(76,154,255,.3)); }
+      to { filter: drop-shadow(0 0 16px rgba(76,154,255,.7)); }
+    }
+  </style>
+  <script src="api-shim.js"></script>
+</head>
+<body>
+  <div class="splash">
+    <svg class="sc" viewBox="0 0 150 150">
+      <polygon points="75.0,47.6 27.6,75.0 11.0,39.4 58.4,12.0" fill="#3F7FE0" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="75.0,47.6 122.4,75.0 139.0,39.4 91.6,12.0" fill="#5BA3FF" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="75.0,83.2 27.6,110.6 27.6,75.0 75.0,47.6" fill="#12254A" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="75.0,83.2 122.4,110.6 122.4,75.0 75.0,47.6" fill="#0E1D3C" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="75.0,83.2 122.4,110.6 75.0,138.0 27.6,110.6" fill="#0A1426" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="75.0,44.9 96.3,57.2 75.0,69.5 53.7,57.2" fill="#EAF4FF" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="96.3,81.8 75.0,94.2 75.0,69.5 96.3,57.2" fill="#A9D1FF" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="53.7,81.8 75.0,94.2 75.0,69.5 53.7,57.2" fill="#6FA8F0" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="122.4,110.6 75.0,138.0 75.0,102.4 122.4,75.0" fill="#4C9AFF" stroke="#000" stroke-width="1.4"></polygon>
+      <polygon points="27.6,110.6 75.0,138.0 75.0,102.4 27.6,75.0" fill="#2C66CC" stroke="#000" stroke-width="1.4"></polygon>
+    </svg>
+    <div class="wm"><span>C</span><span>U</span><span>B</span><span>E</span><span>L</span><span>Y</span><span>X</span></div>
+    <div class="msg">Chargement sécurisé...</div>
+  </div>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+
+    (async function() {
+      try {
+        const resp = await fetch("/api/me");
+        if (resp.status === 200) {
+          const user = await resp.json();
+          if (user.role === "moderator") {
+            window.location.replace("app.html");
+          } else {
+            window.location.replace("app.html");
+          }
+        } else {
+          window.location.replace("login.html");
+        }
+      } catch (e) {
+        window.location.replace("login.html");
+      }
+    })();
+  </script>
+</body>
+</html>

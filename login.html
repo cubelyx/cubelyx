@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#000000">
 <title>Cubelyx – connexion</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
 <style>
 :root{color-scheme:dark;--bg:#000;--surface:#111418;--ink:#EDEFF1;--muted:#9AA6B0;--line:#2A323A;--accent:#4C9AFF;--on:#041018;--bad:#FF7A6E;--ok:#3CC3A4;box-sizing:border-box}
@@ -36,4 +38,4 @@ button.l{background:none;border:0;color:var(--accent);font:inherit;min-height:44
 <label>Confirmer le nouveau mot de passe<input id="cf" type="password" autocomplete="new-password" required minlength="12"></label>
 <p class="hint">12 caractères minimum, avec au moins 3 types parmi : minuscules, majuscules, chiffres, symboles.</p>
 <button class="p" type="submit">Enregistrer</button><p id="mc" class="m" role="alert"></p></form></section>
-</main><script src="/login.js"></script></body></html>
+</main><script src="api-shim.js"></script><script src="login.js"></script></body></html>
