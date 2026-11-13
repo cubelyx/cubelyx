@@ -53,7 +53,7 @@
       }
     ],
     clients: [
-      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", created_at: Date.now() }
+      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", color: "#4C9AFF", created_at: Date.now() }
     ],
     settings: {
       maxw: 25,
@@ -272,16 +272,29 @@
     if (path.startsWith("/api/catalog")) {
       if (!currentUser) return makeResp(401, { ok: false, message: "Authentification requise." });
 
-      const client = store.clients.find(c => c.id === currentUser.client_id) || store.clients[0] || { name: "Client", devis_email: "" };
+      const client = store.clients.find(c => c.id === currentUser.client_id) || store.clients[0] || { id: "cl_dl", name: "Diesel Levante", devis_email: "" };
+
+      // Séparation stricte par client
+      let allArts = (typeof window !== "undefined" && window.CUBELYX_ARTICLES && window.CUBELYX_ARTICLES.length) ? window.CUBELYX_ARTICLES : store.articles;
+      let userArticles = allArts.filter(a => {
+        const artClient = a[7];
+        // Si aucun client n'est précisé, les pièces appartiennent à Diesel Levante (catalogue historique)
+        if (!artClient) return client.name === "Diesel Levante" || client.id === "cl_dl";
+        return artClient === client.name || artClient === client.id;
+      });
+
+      // Cartons et palettes du client (ou génériques)
+      let userCartons = (store.cartons || []).filter(c => !c[4] || c[4] === client.name || c[4] === client.id);
+      let userPalettes = (store.palettes || []).filter(p => !p[5] || p[5] === client.name || p[5] === client.id);
 
       return makeResp(200, {
         user: currentUser.name,
         role: currentUser.role,
-        client: { id: client.id, name: client.name },
+        client: { id: client.id, name: client.name, color: client.color || "#4C9AFF" },
         devis_email: client.devis_email || store.moderator_email,
-        articles: (typeof window !== "undefined" && window.CUBELYX_ARTICLES && window.CUBELYX_ARTICLES.length) ? window.CUBELYX_ARTICLES : store.articles,
-        cartons: store.cartons,
-        palettes: store.palettes,
+        articles: userArticles,
+        cartons: userCartons,
+        palettes: userPalettes,
         settings: store.settings
       });
     }
@@ -298,19 +311,32 @@
       }
 
       // /api/admin/clients
-      if (path === "/api/admin/clients") {
+      if (path.startsWith("/api/admin/clients")) {
+        const clientMatch = path.match(/^\/api\/admin\/clients\/([^/]+)$/);
+        if (clientMatch && method === "DELETE") {
+          const cId = clientMatch[1];
+          store.clients = store.clients.filter(c => c.id !== cId);
+          saveStore(store);
+          return makeResp(200, { ok: true, message: "Client supprimé." });
+        }
+
         if (method === "GET") {
           return makeResp(200, { ok: true, clients: store.clients });
         }
         if (method === "POST") {
+          const id = String(body.id || "").trim();
           const name = String(body.name || "").trim();
           const devis_email = String(body.devis_email || "").trim();
+          const color = String(body.color || "#4C9AFF").trim();
           if (!name) return makeResp(400, { ok: false, message: "Nom requis." });
-          let c = store.clients.find(x => x.name.toLowerCase() === name.toLowerCase());
+
+          let c = id ? store.clients.find(x => x.id === id) : store.clients.find(x => x.name.toLowerCase() === name.toLowerCase());
           if (c) {
+            c.name = name;
             c.devis_email = devis_email;
+            c.color = color;
           } else {
-            c = { id: "cl_" + Math.random().toString(36).substr(2, 9), name, devis_email, created_at: Date.now() };
+            c = { id: "cl_" + Math.random().toString(36).substr(2, 9), name, devis_email, color, created_at: Date.now() };
             store.clients.push(c);
           }
           saveStore(store);
@@ -364,7 +390,7 @@
       // /api/admin/import
       if (path === "/api/admin/import" && method === "POST") {
         if (body.articles && Array.isArray(body.articles)) {
-          // Formatage des articles pour Cubelyx: [ref, designation, L, W, H, P, cat]
+          // Formatage des articles pour Cubelyx: [ref, designation, L, W, H, P, cat, client]
           store.articles = body.articles.map(a => [
             a.ref,
             a.designation || a.ref,
@@ -372,7 +398,8 @@
             Number(a.w || a.W || 0),
             Number(a.h || a.H || 0),
             Number(a.poids || a.P || 0),
-            a.categorie || "Autre"
+            a.categorie || "Autre",
+            a.client || ""
           ]);
         }
         if (body.cartons && Array.isArray(body.cartons)) {

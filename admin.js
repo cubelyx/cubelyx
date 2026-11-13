@@ -25,7 +25,19 @@ async function load(){
   const cn=id=>(clients.find(c=>c.id===id)||{}).name||"–";
   $("usr").innerHTML=act.length?act.map(u=>`<div class="row" data-id="${esc(u.id)}"><div class="t"><b>${esc(u.name)}</b> <span class="muted">${u.role==="moderator"?"(modérateur)":""}</span><br><span class="muted">${esc(u.email)} – ${esc(cn(u.client_id))} – ${u.status==="active"?'<span class="ok">actif</span>':'<span class="bad">désactivé</span>'} – dernière connexion : ${fdate(u.last_login)}</span></div>
     ${u.role==="moderator"?"":`<button data-a="reset">Nouveau mot de passe provisoire</button>${u.status==="active"?'<button data-a="disable">Désactiver</button>':'<button data-a="enable">Réactiver</button>'}<button class="d" data-a="delete">Supprimer</button>`}</div>`).join(""):'<p class="muted">Aucun utilisateur.</p>';
-  $("cl").innerHTML=clients.length?clients.map(c=>`<div class="row"><div class="t"><b>${esc(c.name)}</b><br><span class="muted">Devis : ${esc(c.devis_email||"non renseigné")}</span></div></div>`).join(""):'<p class="muted">Aucun client pour l’instant.</p>';
+  $("cl").innerHTML=clients.length?clients.map(c=>`<div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+    <div class="t">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${esc(c.color||'#4C9AFF')};border:1px solid #fff3;"></span>
+        <b>${esc(c.name)}</b>
+      </div>
+      <span class="muted">Devis : ${esc(c.devis_email||"non renseigné")} • Couleur interface : <code>${esc(c.color||'#4C9AFF')}</code></span>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button type="button" data-ca="edit" data-id="${esc(c.id)}">Modifier</button>
+      <button type="button" class="d" data-ca="delete" data-id="${esc(c.id)}">Supprimer</button>
+    </div>
+  </div>`).join(""):'<p class="muted">Aucun client pour l’instant.</p>';
   const xd=$("xd"),cur=xd.value;xd.innerHTML='<option value="">(aucun : refuser ces lignes)</option>'+clients.map(c=>`<option>${esc(c.name)}</option>`).join("");xd.value=cur;
   const au=(await api("GET","/api/admin/audit")).d.entries||[];
   $("au").innerHTML="<tr><th>Date</th><th>Action</th><th>Compte</th><th>Détail</th></tr>"+au.map(e=>`<tr><td>${fdate(e.ts)}</td><td>${esc(e.action)}</td><td>${esc(e.email||"")}</td><td>${esc(e.detail||"")}</td></tr>`).join("");
@@ -39,8 +51,39 @@ document.addEventListener("click",async e=>{
   if(r.s!==200){alert(r.d.message||"Erreur.");return}
   if(r.d.provisional)showProv(email.split(" – ")[0],r.d.provisional,r.d.expires_hours);
   await load();
+  const cb=e.target.closest("button[data-ca]");
+  if(cb){
+    const ca=cb.dataset.ca,cid=cb.dataset.id;
+    const c=clients.find(x=>x.id===cid);
+    if(ca==="edit"&&c){
+      $("cid").value=c.id;
+      $("cn").value=c.name;
+      $("ce").value=c.devis_email||"";
+      $("ccol").value=c.color||"#4C9AFF";
+      $("cbtn").textContent="Mettre à jour "+c.name;
+      $("crst").style.display="inline-block";
+      $("fcl").scrollIntoView({behavior:"smooth"});
+    }
+    if(ca==="delete"&&c){
+      if(!confirm("Supprimer le client "+c.name+" ?"))return;
+      const r=await api("DELETE","/api/admin/clients/"+cid);
+      if(r.s===200){resetClientForm();await load()}
+      else alert(r.d.message||"Erreur");
+    }
+    return;
+  }
 });
-$("fcl").addEventListener("submit",async e=>{e.preventDefault();const r=await api("POST","/api/admin/clients",{name:$("cn").value,devis_email:$("ce").value});if(r.s!==200){alert(r.d.message||"Erreur.");return}$("fcl").reset();await load()});
+function resetClientForm(){
+  $("cid").value="";$("fcl").reset();$("ccol").value="#4C9AFF";$("cbtn").textContent="Enregistrer";$("crst").style.display="none";
+}
+$("crst").onclick=resetClientForm;
+$("fcl").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const r=await api("POST","/api/admin/clients",{id:$("cid").value,name:$("cn").value,devis_email:$("ce").value,color:$("ccol").value});
+  if(r.s!==200){alert(r.d.message||"Erreur.");return}
+  resetClientForm();
+  await load();
+});
 // ---------- import du fichier final (lu dans le navigateur, le serveur ne lit jamais d'Excel)
 const norm=s=>String(s==null?"":s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
 const num=v=>typeof v==="number"?v:parseFloat(String(v).replace(",","."));

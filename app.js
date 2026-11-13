@@ -2,6 +2,7 @@
 const resp=await fetch("/api/catalog"+location.search,{credentials:"same-origin"});
 if(resp.status===401||resp.status===403){location.replace("login.html"+(resp.status===403?"?change=1":""));return}
 const D=await resp.json();
+if(D.client&&D.client.color){document.documentElement.style.setProperty('--accent',D.client.color);}
 const SK=D.user+"."+(D.client?D.client.id:"-");
 function saveFile(name,data,mime){const u=URL.createObjectURL(new Blob([data],{type:mime})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(u)},1500)}
 const $=id=>document.getElementById(id);

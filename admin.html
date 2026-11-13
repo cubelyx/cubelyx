@@ -34,8 +34,18 @@ a{color:var(--accent)}
 <button id="pcopy" type="button" class="p">Copier</button> <button id="pclose" type="button">J’ai noté, fermer</button></div>
 <h2>Demandes d’accès</h2><div class="box" id="pend"></div>
 <h2>Utilisateurs</h2><div class="box" id="usr"></div>
-<h2>Clients</h2><div class="box"><div id="cl"></div>
-<form id="fcl" class="row"><input id="cn" type="text" placeholder="Nom du client" required maxlength="80"><input id="ce" type="email" placeholder="E-mail pour les devis"><button class="p" type="submit">Ajouter / modifier</button></form></div>
+<h2>Clients & Personnalisation de l’Interface</h2><div class="box"><div id="cl"></div>
+<form id="fcl" class="row" style="gap:8px;align-items:center;margin-top:12px;">
+  <input id="cid" type="hidden">
+  <input id="cn" type="text" placeholder="Nom du client (ex: Diesel Levante)" required maxlength="80" style="flex:1;min-width:180px;">
+  <input id="ce" type="email" placeholder="E-mail pour les devis" style="flex:1;min-width:180px;">
+  <label class="muted" style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;">
+    Couleur interface :
+    <input id="ccol" type="color" value="#4C9AFF" style="width:42px;height:42px;padding:2px;border-radius:6px;cursor:pointer;">
+  </label>
+  <button class="p" type="submit" id="cbtn">Enregistrer</button>
+  <button type="button" id="crst" style="display:none;">Annuler</button>
+</form></div>
 <h2>Importer le fichier final</h2><div class="box">
 <p class="muted">Charge ton fichier Excel complet (feuilles Articles, Cartons, Palettes, Clients, Réglages). L’import <b>remplace</b> les articles des clients présents dans le fichier, ainsi que tous les cartons et palettes.</p>
 <input id="xf" type="file" accept=".xlsx,.xls"> <label class="muted">Client des lignes sans client : <select id="xd"><option value="">(aucun : refuser ces lignes)</option></select></label>
