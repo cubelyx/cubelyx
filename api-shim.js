@@ -279,7 +279,7 @@
         role: currentUser.role,
         client: { id: client.id, name: client.name },
         devis_email: client.devis_email || store.moderator_email,
-        articles: store.articles,
+        articles: (typeof window !== "undefined" && window.CUBELYX_ARTICLES && window.CUBELYX_ARTICLES.length) ? window.CUBELYX_ARTICLES : store.articles,
         cartons: store.cartons,
         palettes: store.palettes,
         settings: store.settings
