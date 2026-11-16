@@ -43,14 +43,18 @@ async function load(){
   $("au").innerHTML="<tr><th>Date</th><th>Action</th><th>Compte</th><th>Détail</th></tr>"+au.map(e=>`<tr><td>${fdate(e.ts)}</td><td>${esc(e.action)}</td><td>${esc(e.email||"")}</td><td>${esc(e.detail||"")}</td></tr>`).join("");
 }
 document.addEventListener("click",async e=>{
-  const b=e.target.closest("button[data-a]");if(!b)return;
-  const row=b.closest(".row"),id=row.dataset.id,a=b.dataset.a,email=(row.querySelector(".muted")||{}).textContent||"";
-  if(a==="delete"&&!confirm("Supprimer définitivement ce compte ?"))return;
-  const body=a==="approve"?{client_id:row.querySelector(".cs").value}:{};
-  const r=a==="delete"?await api("DELETE","/api/admin/users/"+id):await api("POST","/api/admin/users/"+id+"/"+a,body);
-  if(r.s!==200){alert(r.d.message||"Erreur.");return}
-  if(r.d.provisional)showProv(email.split(" – ")[0],r.d.provisional,r.d.expires_hours);
-  await load();
+  const b=e.target.closest("button[data-a]");
+  if(b){
+    const row=b.closest(".row"),id=row.dataset.id,a=b.dataset.a,email=(row.querySelector(".muted")||{}).textContent||"";
+    if(a==="delete"&&!confirm("Supprimer définitivement ce compte ?"))return;
+    const body=a==="approve"?{client_id:row.querySelector(".cs").value}:{};
+    const r=a==="delete"?await api("DELETE","/api/admin/users/"+id):await api("POST","/api/admin/users/"+id+"/"+a,body);
+    if(r.s!==200){alert(r.d.message||"Erreur.");return}
+    if(r.d.provisional)showProv(email.split(" – ")[0],r.d.provisional,r.d.expires_hours);
+    await load();
+    return;
+  }
+
   const cb=e.target.closest("button[data-ca]");
   if(cb){
     const ca=cb.dataset.ca,cid=cb.dataset.id;
