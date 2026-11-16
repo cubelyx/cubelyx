@@ -9,21 +9,23 @@ async function api(method,path,body){
   return{s:r.status,d};
 }
 const fdate=t=>t?new Date(t).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"jamais";
-let clients=[];
+let clients=[],allUsers=[];
 function showProv(email,prov,h){$("pu").textContent=email;$("pc").textContent=prov;$("ph").textContent=h||72;$("prov").hidden=false;$("prov").scrollIntoView()}
 $("pclose").onclick=()=>{$("prov").hidden=true;$("pc").textContent=""};
 $("pcopy").onclick=async()=>{try{await navigator.clipboard.writeText($("pc").textContent);$("pcopy").textContent="Copié"}catch(e){$("pcopy").textContent="Sélectionne le code et copie-le"}};
 $("lo").onclick=async()=>{try{await api("POST","/api/logout",{})}catch(e){}location.href="login.html"};
 async function load(){
   clients=(await api("GET","/api/admin/clients")).d.clients||[];
-  const users=(await api("GET","/api/admin/users")).d.users||[];
+  allUsers=(await api("GET","/api/admin/users")).d.users||[];
   const opts=clients.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
-  const pend=users.filter(u=>u.status==="pending");
+  $("ucl").innerHTML='<option value="">(Aucun client)</option>'+opts;
+  const pend=allUsers.filter(u=>u.status==="pending");
   $("pend").innerHTML=pend.length?pend.map(u=>`<div class="row" data-id="${esc(u.id)}"><div class="t"><b>${esc(u.name)}</b><br><span class="muted">${esc(u.email)} – demandé le ${fdate(u.created_at)}</span></div>
     <select class="cs" aria-label="Client">${opts||'<option value="">Crée d’abord un client</option>'}</select><button class="p" data-a="approve">Valider</button><button class="d" data-a="delete">Refuser</button></div>`).join(""):'<p class="muted">Aucune demande en attente.</p>';
-  const act=users.filter(u=>u.status!=="pending");
+  const act=allUsers.filter(u=>u.status!=="pending");
   const cn=id=>(clients.find(c=>c.id===id)||{}).name||"–";
-  $("usr").innerHTML=act.length?act.map(u=>`<div class="row" data-id="${esc(u.id)}"><div class="t"><b>${esc(u.name)}</b> <span class="muted">${u.role==="moderator"?"(modérateur)":""}</span><br><span class="muted">${esc(u.email)} – ${esc(cn(u.client_id))} – ${u.status==="active"?'<span class="ok">actif</span>':'<span class="bad">désactivé</span>'} – dernière connexion : ${fdate(u.last_login)}</span></div>
+  $("usr").innerHTML=act.length?act.map(u=>`<div class="row" data-id="${esc(u.id)}"><div class="t"><b>${esc(u.name)}</b> <span class="muted">${u.role==="moderator"?"(modérateur)":""}</span><br><span class="muted">${esc(u.email)} – Client : <b>${esc(cn(u.client_id))}</b> – ${u.status==="active"?'<span class="ok">actif</span>':'<span class="bad">désactivé</span>'} – dernière connexion : ${fdate(u.last_login)}</span></div>
+    <button type="button" data-ua="edit" data-id="${esc(u.id)}">Modifier</button>
     ${u.role==="moderator"?"":`<button data-a="reset">Nouveau mot de passe provisoire</button>${u.status==="active"?'<button data-a="disable">Désactiver</button>':'<button data-a="enable">Réactiver</button>'}<button class="d" data-a="delete">Supprimer</button>`}</div>`).join(""):'<p class="muted">Aucun utilisateur.</p>';
   $("cl").innerHTML=clients.length?clients.map(c=>`<div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div class="t">
@@ -31,7 +33,7 @@ async function load(){
         <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${esc(c.color||'#4C9AFF')};border:1px solid #fff3;"></span>
         <b>${esc(c.name)}</b>
       </div>
-      <span class="muted">Devis : ${esc(c.devis_email||"non renseigné")} • Couleur interface : <code>${esc(c.color||'#4C9AFF')}</code></span>
+      <span class="muted">E-mail devis : <b>${esc(c.devis_email||"non renseigné")}</b> • Couleur interface : <code>${esc(c.color||'#4C9AFF')}</code></span>
     </div>
     <div style="display:flex;gap:6px;">
       <button type="button" data-ca="edit" data-id="${esc(c.id)}">Modifier</button>
@@ -55,6 +57,24 @@ document.addEventListener("click",async e=>{
     return;
   }
 
+  const ub=e.target.closest("button[data-ua]");
+  if(ub){
+    const uaid=ub.dataset.id;
+    const u=allUsers.find(x=>x.id===uaid);
+    if(u){
+      $("uid").value=u.id;
+      $("un").value=u.name;
+      $("ue").value=u.email;
+      $("ucl").value=u.client_id||"";
+      $("utitle").textContent="Modifier l’utilisateur : "+u.name;
+      $("ubtn").textContent="Mettre à jour "+u.name;
+      $("fusr").style.display="block";
+      $("fusr").scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>{$("ue").focus()},200);
+    }
+    return;
+  }
+
   const cb=e.target.closest("button[data-ca]");
   if(cb){
     const ca=cb.dataset.ca,cid=cb.dataset.id;
@@ -64,9 +84,12 @@ document.addEventListener("click",async e=>{
       $("cn").value=c.name;
       $("ce").value=c.devis_email||"";
       $("ccol").value=c.color||"#4C9AFF";
+      $("cltitle").textContent="Modifier le client : "+c.name;
       $("cbtn").textContent="Mettre à jour "+c.name;
       $("crst").style.display="inline-block";
-      $("fcl").scrollIntoView({behavior:"smooth"});
+      $("fcl").style.borderColor="var(--accent)";
+      $("fcl").scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>{$("ce").focus()},200);
     }
     if(ca==="delete"&&c){
       if(!confirm("Supprimer le client "+c.name+" ?"))return;
@@ -77,8 +100,19 @@ document.addEventListener("click",async e=>{
     return;
   }
 });
+function resetUserForm(){
+  $("uid").value="";$("fusr").reset();$("fusr").style.display="none";
+}
+$("urst").onclick=resetUserForm;
+$("fusr").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const r=await api("POST","/api/admin/users/"+$("uid").value,{name:$("un").value,email:$("ue").value,client_id:$("ucl").value});
+  if(r.s!==200){alert(r.d.message||"Erreur.");return}
+  resetUserForm();
+  await load();
+});
 function resetClientForm(){
-  $("cid").value="";$("fcl").reset();$("ccol").value="#4C9AFF";$("cbtn").textContent="Enregistrer";$("crst").style.display="none";
+  $("cid").value="";$("fcl").reset();$("ccol").value="#4C9AFF";$("cltitle").textContent="Ajouter un nouveau client";$("cbtn").textContent="Enregistrer le client";$("fcl").style.borderColor="var(--line)";$("crst").style.display="none";
 }
 $("crst").onclick=resetClientForm;
 $("fcl").addEventListener("submit",async e=>{
@@ -104,7 +138,7 @@ $("xf").onchange=async ev=>{
     const settings={};reg.slice(1).forEach(r=>{const k=norm(r[0]);const m=k.includes("poids maximum")?"maxw":k.includes("remplissage")?"fill":k.includes("poids du carton")?"tare":k.includes("passage en palette")?"palmin":null;if(m&&r[1]!=="")settings[m]=num(r[1])});
     const dflt=$("xd").value;
     payload={
-      clients:cli.map(c=>({name:String(pick(c,"nom du client")).trim(),devis_email:String(pick(c,"e mail")||"").trim()})).filter(c=>c.name),
+      clients:cli.map(c=>({name:String(pick(c,"nom du client")).trim(),devis_email:String(pick(c,"e mail")||"").trim(),color:String(pick(c,"couleur")||pick(c,"color")||"").trim()})).filter(c=>c.name),
       articles:arts.map(a=>({client:String(a.client||dflt||"").trim(),ref:String(a.reference).trim(),designation:String(a.designation||"").trim(),categorie:String(a.categorie||"").trim(),l:num(a["longueur mm"]),w:num(a["largeur mm"]),h:num(a["hauteur mm"]),poids:num(a["poids kg"])})),
       cartons:cart.map(c=>({nom:String(pick(c,"nom du carton")).trim(),l:num(c["longueur mm"]),w:num(c["largeur mm"]),h:num(c["hauteur mm"]),client:String(pick(c,"client")||"").trim()})),
       palettes:pal.map(c=>({nom:String(pick(c,"nom de la palette")).trim(),l:num(c["longueur mm"]),w:num(c["largeur mm"]),h:num(c["hauteur max chargement mm"]),poids_vide:num(c["poids a vide kg"]),client:String(pick(c,"client")||"").trim()})),

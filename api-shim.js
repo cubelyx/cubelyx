@@ -50,10 +50,26 @@
         locked_until: 0,
         created_at: Date.now(),
         last_login: null
+      },
+      {
+        id: "usr_romberg_1",
+        email: "atelier@romberg.de",
+        name: "Romberg Logistik",
+        role: "user",
+        status: "active",
+        client_id: "cl_romberg",
+        // Mot de passe initial: Romberg!2026
+        pw_hash: "aea5e4156aa7279d65999ac29ada526dbc3d538011656b4dcece515126028a73",
+        must_change: 0,
+        failed: 0,
+        locked_until: 0,
+        created_at: Date.now(),
+        last_login: null
       }
     ],
     clients: [
-      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", color: "#4C9AFF", created_at: Date.now() }
+      { id: "cl_dl", name: "Diesel Levante", devis_email: "devis@diesellevante.com", color: "#4C9AFF", created_at: Date.now() },
+      { id: "cl_romberg", name: "Romberg", devis_email: "atelier@romberg.de", color: "#237C3E", created_at: Date.now() }
     ],
     settings: {
       maxw: 25,
@@ -62,9 +78,9 @@
       palmin: 5
     },
     cartons: [
-      ["DL 355X255X308", 350, 250, 300, ""],
-      ["DL 450X300X350", 450, 300, 350, ""],
-      ["DL 250X200X200", 250, 200, 200, ""],
+      ["DL 355X255X308", 350, 250, 300, "Diesel Levante"],
+      ["DL 450X300X350", 450, 300, 350, "Diesel Levante"],
+      ["DL 250X200X200", 250, 200, 200, "Diesel Levante"],
       ["Carton Standard 600X400X400", 600, 400, 400, ""]
     ],
     palettes: [
@@ -72,14 +88,19 @@
       ["Demi-Palette 60X80", 600, 800, 1200, 10, ""]
     ],
     articles: [
-      ["00LK-3M-028-SW", "Turbocompresseur SW", 310, 240, 250, 6.5, "Turbo"],
-      ["00LK-3M-001-SW", "Turbocompresseur SW1", 300, 235, 230, 6.1, "Turbo"],
-      ["00LK-2T-004-SW", "CHRA 2T", 140, 140, 162, 1.48, "CHRA"],
-      ["00LK-2T-005-SW", "CHRA 2T-5", 145, 145, 170, 1.6, "CHRA"],
-      ["00LK-3M-045-SW", "Turbocompresseur SW45", 320, 250, 260, 7.2, "Turbo"],
-      ["8G12-300-885", "Turbocompresseur neuf", 300, 235, 230, 6.11, "Turbo"],
-      ["1000-010-006", "Cartouche CHRA", 140, 140, 162, 1.48, "CHRA"],
-      ["ACC-552-PIECE", "Autre pièce mécanique", 180, 120, 100, 2.0, "Autre"]
+      ["00LK-3M-028-SW", "Turbocompresseur SW", 310, 240, 250, 6.5, "Turbo", "Diesel Levante"],
+      ["00LK-3M-001-SW", "Turbocompresseur SW1", 300, 235, 230, 6.1, "Turbo", "Diesel Levante"],
+      ["00LK-2T-004-SW", "CHRA 2T", 140, 140, 162, 1.48, "CHRA", "Diesel Levante"],
+      ["00LK-2T-005-SW", "CHRA 2T-5", 145, 145, 170, 1.6, "CHRA", "Diesel Levante"],
+      ["00LK-3M-045-SW", "Turbocompresseur SW45", 320, 250, 260, 7.2, "Turbo", "Diesel Levante"],
+      ["8G12-300-885", "Turbocompresseur neuf", 300, 235, 230, 6.11, "Turbo", "Diesel Levante"],
+      ["1000-010-006", "Cartouche CHRA", 140, 140, 162, 1.48, "CHRA", "Diesel Levante"],
+      ["ACC-552-PIECE", "Autre pièce mécanique", 180, 120, 100, 2.0, "Autre", "Diesel Levante"],
+      ["RMB-1001", "Mini-serre chauffante BoQube L", 410, 275, 190, 1.85, "Serres", "Romberg"],
+      ["RMB-1002", "Mini-serre classique M ventilée", 380, 240, 180, 0.82, "Serres", "Romberg"],
+      ["RMB-2001", "Nappe chauffante SkinnyHeat 55x35", 550, 350, 25, 0.45, "Accessoires", "Romberg"],
+      ["RMB-3001", "Plateau 24 pastilles coco 38mm", 280, 190, 60, 0.35, "Substrats", "Romberg"],
+      ["RMB-4001", "Lot de 100 pots ronds dégradables 6cm", 220, 180, 140, 0.60, "Pots", "Romberg"]
     ],
     audit: [
       { id: "aud_init", ts: Date.now(), user_id: "usr_mod_1", email: "cubelyx.dev@gmail.com", action: "initialisation", detail: "Démarrage de Cubelyx en version 100% autonome" }
@@ -94,7 +115,63 @@
         localStorage.setItem(DB_KEY, JSON.stringify(INITIAL_DATA));
         return INITIAL_DATA;
       }
-      return JSON.parse(raw);
+      const data = JSON.parse(raw);
+      let changed = false;
+
+      // Synchroniser les clients initiaux
+      if (!data.clients) { data.clients = []; changed = true; }
+      INITIAL_DATA.clients.forEach(c => {
+        if (!data.clients.some(x => x.id === c.id || x.name.toLowerCase() === c.name.toLowerCase())) {
+          data.clients.push(c);
+          changed = true;
+        }
+      });
+
+      // Synchroniser les utilisateurs initiaux
+      if (!data.users) { data.users = []; changed = true; }
+      INITIAL_DATA.users.forEach(u => {
+        if (!data.users.some(x => x.id === u.id || x.email.toLowerCase() === u.email.toLowerCase())) {
+          data.users.push(u);
+          changed = true;
+        }
+      });
+
+      // Synchroniser les articles initiaux (sans écraser)
+      if (!data.articles) { data.articles = []; changed = true; }
+      INITIAL_DATA.articles.forEach(a => {
+        if (!data.articles.some(x => x[0] === a[0])) {
+          data.articles.push(a);
+          changed = true;
+        }
+      });
+
+      // Synchroniser les cartons initiaux
+      if (!data.cartons) { data.cartons = []; changed = true; }
+      // Nettoyer les cartons temporaires
+      if (data.cartons && data.cartons.some(c => c[0] && c[0].startsWith("Carton Romberg"))) {
+        data.cartons = data.cartons.filter(c => !c[0] || !c[0].startsWith("Carton Romberg"));
+        changed = true;
+      }
+      INITIAL_DATA.cartons.forEach(c => {
+        if (!data.cartons.some(x => x[0] === c[0])) {
+          data.cartons.push(c);
+          changed = true;
+        }
+      });
+
+      // Synchroniser les palettes initiales
+      if (!data.palettes) { data.palettes = []; changed = true; }
+      INITIAL_DATA.palettes.forEach(p => {
+        if (!data.palettes.some(x => x[0] === p[0])) {
+          data.palettes.push(p);
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        saveStore(data);
+      }
+      return data;
     } catch (e) {
       return INITIAL_DATA;
     }
@@ -275,17 +352,39 @@
       const client = store.clients.find(c => c.id === currentUser.client_id) || store.clients[0] || { id: "cl_dl", name: "Diesel Levante", devis_email: "" };
 
       // Séparation stricte par client
-      let allArts = (typeof window !== "undefined" && window.CUBELYX_ARTICLES && window.CUBELYX_ARTICLES.length) ? window.CUBELYX_ARTICLES : store.articles;
+      let allArts = [];
+      if (store.articles && store.articles.length) {
+        allArts = allArts.concat(store.articles);
+      }
+      if (typeof window !== "undefined" && window.CUBELYX_ARTICLES && window.CUBELYX_ARTICLES.length) {
+        allArts = allArts.concat(window.CUBELYX_ARTICLES);
+      }
+
       let userArticles = allArts.filter(a => {
-        const artClient = a[7];
+        const artClient = (a[7] || "").trim();
         // Si aucun client n'est précisé, les pièces appartiennent à Diesel Levante (catalogue historique)
         if (!artClient) return client.name === "Diesel Levante" || client.id === "cl_dl";
-        return artClient === client.name || artClient === client.id;
+        return artClient.toLowerCase() === client.name.toLowerCase() || artClient === client.id;
       });
 
-      // Cartons et palettes du client (ou génériques)
-      let userCartons = (store.cartons || []).filter(c => !c[4] || c[4] === client.name || c[4] === client.id);
-      let userPalettes = (store.palettes || []).filter(p => !p[5] || p[5] === client.name || p[5] === client.id);
+      // Déduplication par référence
+      const seenRef = new Set();
+      userArticles = userArticles.filter(a => {
+        if (!a || !a[0]) return false;
+        if (seenRef.has(a[0])) return false;
+        seenRef.add(a[0]);
+        return true;
+      });
+
+      // Cartons et palettes du client (ou génériques sans client précisé)
+      // Pour les clients autres que Diesel Levante, retirer impérativement les cartons qui commencent par "DL"
+      let userCartons = (store.cartons || []).filter(c => {
+        const cNom = String(c[0] || "").trim();
+        const isDL = client.name.toLowerCase() === "diesel levante" || client.id === "cl_dl";
+        if (!isDL && cNom.toUpperCase().startsWith("DL")) return false;
+        return !c[4] || c[4].toLowerCase() === client.name.toLowerCase() || c[4] === client.id;
+      });
+      let userPalettes = (store.palettes || []).filter(p => !p[5] || p[5].toLowerCase() === client.name.toLowerCase() || p[5] === client.id);
 
       return makeResp(200, {
         user: currentUser.name,
@@ -364,6 +463,21 @@
           return makeResp(200, { ok: true, message: "Compte supprimé." });
         }
 
+        if (method === "POST" && !action) {
+          if (body.email) {
+            const newEmail = String(body.email).trim().toLowerCase();
+            const exists = store.users.some(u => u.id !== uId && u.email.toLowerCase() === newEmail);
+            if (exists) {
+              return makeResp(400, { ok: false, message: "Cet e-mail est déjà utilisé par un autre compte." });
+            }
+            target.email = newEmail;
+          }
+          if (body.name) target.name = String(body.name).trim();
+          if (body.client_id !== undefined) target.client_id = body.client_id;
+          saveStore(store);
+          return makeResp(200, { ok: true, user: target, message: "Utilisateur mis à jour avec succès." });
+        }
+
         if (action === "approve" || action === "reset") {
           const tempPass = "CUBE-" + Math.floor(1000 + Math.random() * 9000) + "-PASS";
           target.status = "active";
@@ -389,9 +503,32 @@
 
       // /api/admin/import
       if (path === "/api/admin/import" && method === "POST") {
+        if (body.clients && Array.isArray(body.clients)) {
+          body.clients.forEach(bc => {
+            const cName = String(bc.name || "").trim();
+            if (!cName) return;
+            let existing = store.clients.find(c => c.name.toLowerCase() === cName.toLowerCase());
+            if (existing) {
+              if (bc.devis_email) existing.devis_email = bc.devis_email;
+              if (bc.color) existing.color = bc.color;
+            } else {
+              store.clients.push({
+                id: "cl_" + Math.random().toString(36).substr(2, 9),
+                name: cName,
+                devis_email: bc.devis_email || "",
+                color: bc.color || "#237C3E",
+                created_at: Date.now()
+              });
+            }
+          });
+        }
         if (body.articles && Array.isArray(body.articles)) {
-          // Formatage des articles pour Cubelyx: [ref, designation, L, W, H, P, cat, client]
-          store.articles = body.articles.map(a => [
+          const importedClients = new Set(body.articles.map(a => String(a.client || "").trim().toLowerCase()).filter(Boolean));
+          const retainedArticles = (store.articles || []).filter(a => {
+            const artClient = String(a[7] || "").trim().toLowerCase();
+            return !importedClients.has(artClient);
+          });
+          const newArticles = body.articles.map(a => [
             a.ref,
             a.designation || a.ref,
             Number(a.l || a.L || 0),
@@ -401,18 +538,30 @@
             a.categorie || "Autre",
             a.client || ""
           ]);
+          store.articles = retainedArticles.concat(newArticles);
         }
         if (body.cartons && Array.isArray(body.cartons)) {
-          store.cartons = body.cartons.map(c => [
+          const importedClients = new Set(body.cartons.map(c => String(c.client || "").trim().toLowerCase()).filter(Boolean));
+          const retainedCartons = (store.cartons || []).filter(c => {
+            const cClient = String(c[4] || "").trim().toLowerCase();
+            return cClient && !importedClients.has(cClient);
+          });
+          const newCartons = body.cartons.map(c => [
             c.nom || c.name,
             Number(c.l || c.L || 0),
             Number(c.w || c.W || 0),
             Number(c.h || c.H || 0),
             c.client || ""
           ]);
+          store.cartons = retainedCartons.concat(newCartons);
         }
         if (body.palettes && Array.isArray(body.palettes)) {
-          store.palettes = body.palettes.map(p => [
+          const importedClients = new Set(body.palettes.map(p => String(p.client || "").trim().toLowerCase()).filter(Boolean));
+          const retainedPalettes = (store.palettes || []).filter(p => {
+            const pClient = String(p[5] || "").trim().toLowerCase();
+            return pClient && !importedClients.has(pClient);
+          });
+          const newPalettes = body.palettes.map(p => [
             p.nom || p.name,
             Number(p.l || p.L || 0),
             Number(p.w || p.W || 0),
@@ -420,6 +569,7 @@
             Number(p.poids_vide || 0),
             p.client || ""
           ]);
+          store.palettes = retainedPalettes.concat(newPalettes);
         }
         if (body.settings) {
           store.settings = Object.assign(store.settings || {}, body.settings);
@@ -431,7 +581,7 @@
           user_id: currentUser.id,
           email: currentUser.email,
           action: "import_catalogue",
-          detail: `Import de ${store.articles.length} articles, ${store.cartons.length} cartons, ${store.palettes.length} palettes.`
+          detail: `Import : ${store.articles.length} articles, ${store.cartons.length} cartons, ${store.palettes.length} palettes.`
         });
 
         saveStore(store);

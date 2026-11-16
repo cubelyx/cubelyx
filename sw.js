@@ -1,5 +1,5 @@
-// Cubelyx Service Worker - Mise en cache PWA
-const CACHE_NAME = "cubelyx-v2.0";
+// Cubelyx Service Worker - PWA Network-First (Mise à jour immédiate)
+const CACHE_NAME = "cubelyx-v2.3";
 const ASSETS = [
   "./",
   "index.html",
@@ -15,8 +15,9 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
 });
 
@@ -29,10 +30,19 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  // Les requêtes /api/* sont gérées par api-shim.js
+  // Les requêtes /api/* sont interceptées par api-shim.js
   if (event.request.url.includes("/api/")) return;
 
+  // Stratégie Network-First : charge toujours la version la plus récente du fichier
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    fetch(event.request)
+      .then(response => {
+        if (response && response.status === 200 && event.request.method === "GET") {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
