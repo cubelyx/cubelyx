@@ -81,11 +81,15 @@
       ["DL 355X255X308", 350, 250, 300, "Diesel Levante"],
       ["DL 450X300X350", 450, 300, 350, "Diesel Levante"],
       ["DL 250X200X200", 250, 200, 200, "Diesel Levante"],
+      ["Carton 355X255X308", 350, 250, 300, "Romberg"],
+      ["Carton 450X300X350", 450, 300, 350, "Romberg"],
+      ["Carton 250X200X200", 250, 200, 200, "Romberg"],
       ["Carton Standard 600X400X400", 600, 400, 400, ""]
     ],
     palettes: [
       ["Palette Europe 80X120", 800, 1200, 1600, 20, ""],
-      ["Demi-Palette 60X80", 600, 800, 1200, 10, ""]
+      ["Demi-Palette 60X80", 600, 800, 1200, 10, ""],
+      ["Palette Perdue 80X120", 800, 1200, 1600, 10, ""]
     ],
     articles: [
       ["00LK-3M-028-SW", "Turbocompresseur SW", 310, 240, 250, 6.5, "Turbo", "Diesel Levante"],
@@ -147,10 +151,11 @@
 
       // Synchroniser les cartons initiaux
       if (!data.cartons) { data.cartons = []; changed = true; }
-      // Nettoyer les cartons temporaires
-      if (data.cartons && data.cartons.some(c => c[0] && c[0].startsWith("Carton Romberg"))) {
-        data.cartons = data.cartons.filter(c => !c[0] || !c[0].startsWith("Carton Romberg"));
-        changed = true;
+      // Nettoyer les cartons invalides ou corrompus (dimensions <= 0 ou noms incomplets)
+      if (data.cartons) {
+        const origCount = data.cartons.length;
+        data.cartons = data.cartons.filter(c => c && c[0] && String(c[0]).trim().length > 2 && Number(c[1] || 0) > 0 && Number(c[2] || 0) > 0 && Number(c[3] || 0) > 0);
+        if (data.cartons.length !== origCount) changed = true;
       }
       INITIAL_DATA.cartons.forEach(c => {
         if (!data.cartons.some(x => x[0] === c[0])) {
@@ -161,6 +166,11 @@
 
       // Synchroniser les palettes initiales
       if (!data.palettes) { data.palettes = []; changed = true; }
+      if (data.palettes) {
+        const origCount = data.palettes.length;
+        data.palettes = data.palettes.filter(p => p && p[0] && String(p[0]).trim().length > 2 && Number(p[1] || 0) > 0 && Number(p[2] || 0) > 0 && Number(p[3] || 0) > 0);
+        if (data.palettes.length !== origCount) changed = true;
+      }
       INITIAL_DATA.palettes.forEach(p => {
         if (!data.palettes.some(x => x[0] === p[0])) {
           data.palettes.push(p);
@@ -377,14 +387,42 @@
       });
 
       // Cartons et palettes du client (ou génériques sans client précisé)
-      // Pour les clients autres que Diesel Levante, retirer impérativement les cartons qui commencent par "DL"
       let userCartons = (store.cartons || []).filter(c => {
+        if (!c || !c[0]) return false;
+        const cL = Number(c[1] || 0), cW = Number(c[2] || 0), cH = Number(c[3] || 0);
+        if (cL <= 0 || cW <= 0 || cH <= 0) return false;
         const cNom = String(c[0] || "").trim();
         const isDL = client.name.toLowerCase() === "diesel levante" || client.id === "cl_dl";
         if (!isDL && cNom.toUpperCase().startsWith("DL")) return false;
-        return !c[4] || c[4].toLowerCase() === client.name.toLowerCase() || c[4] === client.id;
+        const cClient = String(c[4] || "").trim().toLowerCase();
+        return !cClient || cClient === client.name.toLowerCase() || cClient === client.id;
       });
-      let userPalettes = (store.palettes || []).filter(p => !p[5] || p[5].toLowerCase() === client.name.toLowerCase() || p[5] === client.id);
+
+      // Si Romberg (ou tout client non-DL) n'a pas de cartons dédiés, lui fournir automatiquement les cartons standards sans préfixe "DL"
+      if (!userCartons.length) {
+        userCartons = [
+          ["Carton 355X255X308", 350, 250, 300, client.name],
+          ["Carton 450X300X350", 450, 300, 350, client.name],
+          ["Carton 250X200X200", 250, 200, 200, client.name],
+          ["Carton Standard 600X400X400", 600, 400, 400, ""]
+        ];
+      }
+
+      let userPalettes = (store.palettes || []).filter(p => {
+        if (!p || !p[0]) return false;
+        const pL = Number(p[1] || 0), pW = Number(p[2] || 0), pH = Number(p[3] || 0);
+        if (pL <= 0 || pW <= 0 || pH <= 0) return false;
+        const pClient = String(p[5] || "").trim().toLowerCase();
+        return !pClient || pClient === client.name.toLowerCase() || pClient === client.id;
+      });
+
+      // S'il n'y a pas de palettes spécifiques pour ce client, toujours fournir les palettes standards
+      if (!userPalettes.length) {
+        userPalettes = [
+          ["Palette Europe 80X120", 800, 1200, 1600, 20, ""],
+          ["Demi-Palette 60X80", 600, 800, 1200, 10, ""]
+        ];
+      }
 
       return makeResp(200, {
         user: currentUser.name,
@@ -544,9 +582,12 @@
           const importedClients = new Set(body.cartons.map(c => String(c.client || "").trim().toLowerCase()).filter(Boolean));
           const retainedCartons = (store.cartons || []).filter(c => {
             const cClient = String(c[4] || "").trim().toLowerCase();
-            return cClient && !importedClients.has(cClient);
+            return !cClient || !importedClients.has(cClient);
           });
-          const newCartons = body.cartons.map(c => [
+          const newCartons = body.cartons.filter(c => {
+            const l = Number(c.l || c.L || 0), w = Number(c.w || c.W || 0), h = Number(c.h || c.H || 0);
+            return l > 0 && w > 0 && h > 0;
+          }).map(c => [
             c.nom || c.name,
             Number(c.l || c.L || 0),
             Number(c.w || c.W || 0),
@@ -559,9 +600,12 @@
           const importedClients = new Set(body.palettes.map(p => String(p.client || "").trim().toLowerCase()).filter(Boolean));
           const retainedPalettes = (store.palettes || []).filter(p => {
             const pClient = String(p[5] || "").trim().toLowerCase();
-            return pClient && !importedClients.has(pClient);
+            return !pClient || !importedClients.has(pClient);
           });
-          const newPalettes = body.palettes.map(p => [
+          const newPalettes = body.palettes.filter(p => {
+            const l = Number(p.l || p.L || 0), w = Number(p.w || p.W || 0), h = Number(p.h || p.H || 0);
+            return l > 0 && w > 0 && h > 0;
+          }).map(p => [
             p.nom || p.name,
             Number(p.l || p.L || 0),
             Number(p.w || p.W || 0),

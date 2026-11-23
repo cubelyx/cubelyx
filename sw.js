@@ -1,5 +1,5 @@
 // Cubelyx Service Worker - PWA Network-First (Mise à jour immédiate)
-const CACHE_NAME = "cubelyx-v2.3";
+const CACHE_NAME = "cubelyx-v2.4";
 const ASSETS = [
   "./",
   "index.html",

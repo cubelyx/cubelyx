@@ -10,12 +10,12 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const num=v=>{const n=parseFloat(String(v).replace(/\s/g,"").replace(",","."));return isFinite(n)?n:NaN};
 const fmt=(n,d=1)=>n.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const n1=n=>n.toLocaleString("fr-FR",{maximumFractionDigits:1});
-const CART=D.cartons;
+const CART=D.cartons||[];
 const CATMAP={Turbo:"turbo",CHRA:"chra",Autre:"autre"};
-const A=D.articles.map(([n,des,L,W,H,P,cat])=>({n,k:n.toLowerCase(),L,W,H,P,q:0,t:des,tl:des.toLowerCase(),g:"",cat:CATMAP[cat]||"autre"}));
+const A=D.articles.map(([n,des,L,W,H,P,cat])=>({n,k:n.toLowerCase(),L:Number(L)||0,W:Number(W)||0,H:Number(H)||0,P:Number(P)||0,q:0,t:des,tl:des.toLowerCase(),g:"",cat:CATMAP[cat]||"autre"}));
 A.forEach(a=>a.cat0=a.cat);
 const byCode=new Map(A.map((a,i)=>[a.k,i]));
-const cs=CART.map(([name,L,W,H])=>({name,L,W,H,d:[L,W,H].sort((x,y)=>y-x),vol:L*W*H})).sort((x,y)=>x.vol-y.vol);
+const cs=(CART.length?CART:[["Carton Standard 600X400X400",600,400,400]]).filter(([n,L,W,H])=>Number(L)>0&&Number(W)>0&&Number(H)>0).map(([name,L,W,H])=>({name,L,W,H,d:[L,W,H].sort((x,y)=>y-x),vol:L*W*H})).sort((x,y)=>x.vol-y.vol);
 $("cat").textContent=`${A.length} articles et ${cs.length} cartons dans le catalogue (dimensions en mm, poids en kg).`;
 const VER={beta:"2.0",phase:1,date:"30/10/2026"};
 $("vb").textContent="bêta "+VER.beta;
@@ -100,10 +100,10 @@ function pack3(items,c,up){
   return res?res.map((e,i)=>Object.assign({},e,{n:list[i].name})):null;
 }
 const EXP={head:["Niveau","N°","Emballage","Dimensions (mm)","Contenu","Carton","Code article","Désignation","Quantité","Poids (kg)","Poids du bloc (kg)"],rows:[],blocks:[],pal:null,nofit:[],sum:[]};
-let PALMIN=0,PALWHY="";const PALS=D.palettes.map(([name,l,w,h,P])=>({name,d:[l,w,h],P}));
+let PALMIN=0,PALWHY="";const PALS=(D.palettes&&D.palettes.length?D.palettes:[["Palette Europe 80X120",800,1200,1600,20]]).map(([name,l,w,h,P])=>({name,d:[l,w,h],P:P||0}));
 function palletHtml(bins,raw){
-  const items=bins.map(b=>({ro:[b.c.L,b.c.W,b.c.H],d:[b.c.L,b.c.W,b.c.H].sort((x,y)=>y-x),vol:b.c.vol,P:b.w,name:b.c.name,bin:b})).concat((raw||[]).map(u=>({ro:u.ro,d:u.d,vol:u.vol,P:u.P,name:u.name+" (brut)",t:u.t,free:u.free||u.fr}))).sort((p,q)=>q.vol-p.vol);
-  const big=PALS[PALS.length-1],groups=[],nofit=[];
+  const items=bins.filter(b=>b.c).map(b=>({ro:[b.c.L,b.c.W,b.c.H],d:[b.c.L,b.c.W,b.c.H].sort((x,y)=>y-x),vol:b.c.vol,P:b.w,name:b.c.name,bin:b})).concat((raw||[]).map(u=>({ro:u.ro,d:u.d,vol:u.vol,P:u.P,name:u.name+" (brut)",t:u.t,free:u.free||u.fr}))).sort((p,q)=>q.vol-p.vol);
+  const big=PALS[PALS.length-1]||{name:"Palette Europe 80X120",d:[800,1200,1600],P:20},groups=[],nofit=[];
   for(const it of items){
     let done=false;
     for(const g of groups){
@@ -118,8 +118,8 @@ function palletHtml(bins,raw){
   }
   let totKg=0,body="";
   groups.forEach((g,j)=>{
-    const p=PALS.find(p=>pack3(g.items,p,true))||big,pl=pack3(g.items,p,true)||g.pl;
-    const hh=Math.max(...pl.map(o=>o.z+o.c)),wc=g.items.reduce((s,u)=>s+u.P,0);
+    const p=PALS.find(p=>pack3(g.items,p,true))||big,pl=pack3(g.items,p,true)||g.pl||[];
+    const hh=pl.length?Math.max(...pl.map(o=>o.z+o.c)):100,wc=g.items.reduce((s,u)=>s+u.P,0);
     totKg+=wc+p.P;
     const names=[...new Set(g.items.map(u=>u.name))],sw=n=>`<i class="sw" style="--h:${HUES[names.indexOf(n)%HUES.length]}"></i>`;
     const rawL={},cars=g.items.filter(u=>u.bin),ord=g.items.slice().sort((p,q)=>q.vol-p.vol),num=u=>ord.indexOf(u)+1;
@@ -148,7 +148,7 @@ function plan(b){
   const lab=o=>{const fs=Math.min(15,(o.a+o.b)*.866*k*.4,(o.a+o.b)*.5*k*.75);if(fs<7)return "";const xy=P(o.x+o.a/2,o.y+o.b/2,o.z+o.c).split(",");return `<text class="nb" x="${xy[0]}" y="${xy[1]}" font-size="${fs.toFixed(1)}">${o.no}</text>`};
   const pg=(q,c)=>`<polygon class="${c}" points="${q.map(v=>P(...v)).join(" ")}"/>`;
   const names=[...new Set(b.items.map(u=>u.name))];
-  const its=b.pl.map((o,i)=>Object.assign({},o,{no:i+1})).sort((p,q)=>(p.x+p.y+p.z)-(q.x+q.y+q.z)||(p.x+p.y)-(q.x+q.y));
+  const its=(b.pl||[]).map((o,i)=>Object.assign({},o,{no:i+1})).sort((p,q)=>(p.x+p.y+p.z)-(q.x+q.y+q.z)||(p.x+p.y)-(q.x+q.y));
   const body=its.map((o,j)=>{
     const {x,y,z}=o,x2=x+o.a,y2=y+o.b,z2=z+o.c;
     return `<g class="it" style="--h:${HUES[names.indexOf(o.n)%HUES.length]};--n:${Math.min(j,16)}">`+pg([[x,y,z2],[x2,y,z2],[x2,y2,z2],[x,y2,z2]],"t")+pg([[x2,y,z],[x2,y2,z],[x2,y2,z2],[x2,y,z2]],"r")+pg([[x,y2,z],[x2,y2,z],[x2,y2,z2],[x,y2,z2]],"l")+lab(o)+"</g>";
@@ -317,7 +317,7 @@ function runPack(){
     }
     if(!done)bins.push({items:[u],m:u.d.slice(),vol:u.vol,w:tare+u.P});
   }
-  bins.forEach(b=>{b.c=fitCarton(b.items,b.m,b.vol);b.tight=b.items.length===1&&b.vol>b.c.vol*fill;b.pl=pack3(b.items,b.c)});return{lost,bins}};
+  bins.forEach(b=>{b.c=fitCarton(b.items,b.m,b.vol)||cs[cs.length-1]||{name:"Carton",L:600,W:400,H:400,d:[600,400,400],vol:96000000};b.tight=b.items.length===1&&b.vol>b.c.vol*fill;b.pl=pack3(b.items,b.c)||[]});return{lost,bins}};
   let {lost,bins}=packIt(units);const n0=bins.length;let rawT=[];
   const palMode=n0>PALMIN||lost.length>0;PALWHY=n0>PALMIN?"count":"size";
   if(palMode){
@@ -406,7 +406,7 @@ const ANIM='<div class="anim" role="status"><svg viewBox="0 0 120 120" aria-hidd
 $("go").onclick=()=>{
   view("res");window.t0=Date.now();
   const n=A.reduce((t,a)=>t+a.q,0),go=$("go");
-  const run=()=>{try{runPack()}catch(e){$("res").innerHTML='<p class="err">Une erreur est survenue pendant le calcul. Réessaie, ou vide la sélection.</p>'}go.disabled=false};
+  const run=()=>{try{runPack()}catch(e){console.error("Pack error:",e);$("res").innerHTML='<p class="err">Une erreur est survenue pendant le calcul ('+esc(e.message||e)+'). Réessaie, ou vide la sélection.</p>'}go.disabled=false};
   go.disabled=true;
   if(calm()){run();return}
   $("res").innerHTML=ANIM.replace("Répartition en cours…","Calcul en cours…"+(n>150?"<br>Grosse commande : quelques secondes…":""));

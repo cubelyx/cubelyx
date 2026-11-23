@@ -124,7 +124,7 @@ $("fcl").addEventListener("submit",async e=>{
 });
 // ---------- import du fichier final (lu dans le navigateur, le serveur ne lit jamais d'Excel)
 const norm=s=>String(s==null?"":s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
-const num=v=>typeof v==="number"?v:parseFloat(String(v).replace(",","."));
+const num=v=>{if(typeof v==="number")return isNaN(v)?0:v;const n=parseFloat(String(v==null?"":v).replace(",",".").replace(/[^0-9.-]/g,""));return isNaN(n)?0:n;};
 let payload=null;
 function sheet(wb,name){const n=wb.SheetNames.find(x=>norm(x)===norm(name));return n?XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:""}):[]}
 function table(rows){if(!rows.length)return[];const h=rows[0].map(norm);return rows.slice(1).filter(r=>r.some(c=>c!=="")).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=r[i]});return o})}
