@@ -17,7 +17,7 @@ A.forEach(a=>a.cat0=a.cat);
 const byCode=new Map(A.map((a,i)=>[a.k,i]));
 const cs=(CART.length?CART:[["Carton Standard 600X400X400",600,400,400]]).filter(([n,L,W,H])=>Number(L)>0&&Number(W)>0&&Number(H)>0).map(([name,L,W,H])=>({name,L,W,H,d:[L,W,H].sort((x,y)=>y-x),vol:L*W*H})).sort((x,y)=>x.vol-y.vol);
 $("cat").textContent=`${A.length} articles et ${cs.length} cartons dans le catalogue (dimensions en mm, poids en kg).`;
-const VER={beta:"2.0",phase:1,date:"30/10/2026"};
+const VER={beta:"2.5",phase:1,date:"24/11/2026"};
 $("vb").textContent="bêta "+VER.beta;
 $("ver").textContent=`Cubelyx, version bêta ${VER.beta} (phase ${VER.phase}), mise à jour du ${VER.date}`;
 const mn=$("mn"),mb=$("mb");
@@ -135,7 +135,7 @@ function palletHtml(bins,raw){
     cars.forEach((u,ci)=>{const c={};u.bin.items.forEach(x=>{if(!c[x.name])c[x.name]={k:0,t:x.t,w:0};c[x.name].k++;c[x.name].w+=x.P});Object.entries(c).forEach(([n,x])=>EXP.rows.push(["Palette",j+1,p.name,dims,"Carton",u.name+" n°"+num(u),n,x.t||"",x.k,+x.w.toFixed(2),blk()]))});
     body+=`<details class="box" open style="--i:${j}"><summary class="bh"><h3>Palette ${j+1}</h3><span class="sm">${fmt(wc+p.P)} kg<br>${esc(p.name)}</span></summary>${plan({c:{d:[p.d[0],p.d[1],hh]},items:g.items,pl})}<div class="gl"><span>Hauteur</span><b>${n1(hh)} / ${n1(p.d[2])} mm</b></div><div class="gauge v"><i style="width:${Math.min(100,hh/p.d[2]*100)}%"></i></div><div class="gl"><span>Poids : contenu + palette</span><b>${fmt(wc)} + ${fmt(p.P)} = ${fmt(wc+p.P)} kg</b></div>${pl.some(o=>o.tilt)?`<p class="muted">Posé sur une autre face : ${[...new Set(pl.filter(o=>o.tilt).map(o=>o.n.replace(" (brut)","")))].map(esc).join(", ")}. Vérifie que c’est possible.</p>`:""}<ul>${rawH}</ul>${carH}</details>`;
   });
-  const note=`<div class="note">${icon({L:1,W:1,H:1})}<p>${PALWHY==="size"?"Un article est trop grand pour les cartons : il est posé brut sur la palette.":PALMIN?`Plus de ${PALMIN} colis : bascule automatique sur palette.`:"Tout part sur palette."} ${rawT.length?"Les articles volumineux sont posés bruts sans carton ; les autres articles sont conditionnés en cartons sur la palette. ":"Les colis sont optimisés et palettisés ensemble sur la palette Europe. "}Rangement vérifié en 3D : tout reste à plat.</p></div>`;
+  const note=`<div class="note">${icon({L:1,W:1,H:1})}<p>${PALWHY==="size"?"Un article est trop grand pour les cartons : il est posé brut sur la palette.":PALMIN?`Plus de ${PALMIN} colis : bascule automatique sur palette.`:"Tout part sur palette."} ${(raw&&raw.length)?"Les articles volumineux sont posés bruts sans carton ; les autres articles sont conditionnés en cartons sur la palette. ":"Les colis sont optimisés et palettisés ensemble sur la palette Europe. "}Rangement vérifié en 3D : tout reste à plat.</p></div>`;
   EXP.pal={n:groups.length,tot:totKg};EXP.nofit=[...new Set(nofit.map(u=>u.name.replace(" (brut)","")))];
   let h=groups.length?`<h2>${groups.length} palette${groups.length>1?"s":""}, ${fmt(totKg)} kg</h2>${note}${body}`:"";
   if(nofit.length)h+=`<p class="err">Trop grand pour une palette : ${[...new Set(nofit.map(u=>u.name.replace(" (brut)","")))].map(esc).join(", ")}.</p>`+devisHtml(nofit);
