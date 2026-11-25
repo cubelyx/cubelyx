@@ -17,7 +17,7 @@ A.forEach(a=>a.cat0=a.cat);
 const byCode=new Map(A.map((a,i)=>[a.k,i]));
 const cs=(CART.length?CART:[["Carton Standard 600X400X400",600,400,400]]).filter(([n,L,W,H])=>Number(L)>0&&Number(W)>0&&Number(H)>0).map(([name,L,W,H])=>({name,L,W,H,d:[L,W,H].sort((x,y)=>y-x),vol:L*W*H})).sort((x,y)=>x.vol-y.vol);
 $("cat").textContent=`${A.length} articles et ${cs.length} cartons dans le catalogue (dimensions en mm, poids en kg).`;
-const VER={beta:"2.5",phase:1,date:"24/11/2026"};
+const VER={beta:"2.6",phase:1,date:"24/11/2026"};
 $("vb").textContent="bêta "+VER.beta;
 $("ver").textContent=`Cubelyx, version bêta ${VER.beta} (phase ${VER.phase}), mise à jour du ${VER.date}`;
 const mn=$("mn"),mb=$("mb");
@@ -100,7 +100,7 @@ function pack3(items,c,up){
   return res?res.map((e,i)=>Object.assign({},e,{n:list[i].name})):null;
 }
 const EXP={head:["Niveau","N°","Emballage","Dimensions (mm)","Contenu","Carton","Code article","Désignation","Quantité","Poids (kg)","Poids du bloc (kg)"],rows:[],blocks:[],pal:null,nofit:[],sum:[]};
-let PALMIN=0,PALWHY="";const PALS=(D.palettes&&D.palettes.length?D.palettes:[["Palette Europe 80X120",800,1200,1600,20]]).map(([name,l,w,h,P])=>({name,d:[l,w,h],P:P||0}));
+let PALMIN=0,PALWHY="";const PALS=(D.palettes&&D.palettes.length?D.palettes:[["Palette Europe 80X120",800,1200,1600,20]]).map(([name,l,w,h,P])=>({name,d:[l,w,h],P:P||0})).sort((a,b)=>(a.d[0]*a.d[1]*a.d[2])-(b.d[0]*b.d[1]*b.d[2]));
 function palletHtml(bins,raw){
   const items=bins.filter(b=>b.c).map(b=>({ro:[b.c.L,b.c.W,b.c.H],d:[b.c.L,b.c.W,b.c.H].sort((x,y)=>y-x),vol:b.c.vol,P:b.w,name:b.c.name,bin:b})).concat((raw||[]).map(u=>({ro:u.ro,d:u.d,vol:u.vol,P:u.P,name:u.name+" (brut)",t:u.t,free:u.free||u.fr}))).sort((p,q)=>q.vol-p.vol);
   const big=PALS[PALS.length-1]||{name:"Palette Europe 80X120",d:[800,1200,1600],P:20},groups=[],nofit=[];
@@ -135,7 +135,7 @@ function palletHtml(bins,raw){
     cars.forEach((u,ci)=>{const c={};u.bin.items.forEach(x=>{if(!c[x.name])c[x.name]={k:0,t:x.t,w:0};c[x.name].k++;c[x.name].w+=x.P});Object.entries(c).forEach(([n,x])=>EXP.rows.push(["Palette",j+1,p.name,dims,"Carton",u.name+" n°"+num(u),n,x.t||"",x.k,+x.w.toFixed(2),blk()]))});
     body+=`<details class="box" open style="--i:${j}"><summary class="bh"><h3>Palette ${j+1}</h3><span class="sm">${fmt(wc+p.P)} kg<br>${esc(p.name)}</span></summary>${plan({c:{d:[p.d[0],p.d[1],hh]},items:g.items,pl})}<div class="gl"><span>Hauteur</span><b>${n1(hh)} / ${n1(p.d[2])} mm</b></div><div class="gauge v"><i style="width:${Math.min(100,hh/p.d[2]*100)}%"></i></div><div class="gl"><span>Poids : contenu + palette</span><b>${fmt(wc)} + ${fmt(p.P)} = ${fmt(wc+p.P)} kg</b></div>${pl.some(o=>o.tilt)?`<p class="muted">Posé sur une autre face : ${[...new Set(pl.filter(o=>o.tilt).map(o=>o.n.replace(" (brut)","")))].map(esc).join(", ")}. Vérifie que c’est possible.</p>`:""}<ul>${rawH}</ul>${carH}</details>`;
   });
-  const note=`<div class="note">${icon({L:1,W:1,H:1})}<p>${PALWHY==="size"?"Un article est trop grand pour les cartons : il est posé brut sur la palette.":PALMIN?`Plus de ${PALMIN} colis : bascule automatique sur palette.`:"Tout part sur palette."} ${(raw&&raw.length)?"Les articles volumineux sont posés bruts sans carton ; les autres articles sont conditionnés en cartons sur la palette. ":"Les colis sont optimisés et palettisés ensemble sur la palette Europe. "}Rangement vérifié en 3D : tout reste à plat.</p></div>`;
+  const note=`<div class="note">${icon({L:1,W:1,H:1})}<p>${PALWHY==="size"?"Un article est trop grand pour les cartons : il est posé brut sur la palette.":PALMIN?`Plus de ${PALMIN} colis : bascule automatique sur palette.`:"Tout part sur palette."} ${(raw&&raw.length)?"Les articles volumineux sont posés bruts sans carton ; les autres articles sont conditionnés en cartons sur la palette. ":"Les colis sont optimisés et palettisés ensemble sur palette. "}Rangement vérifié en 3D : tout reste à plat.</p></div>`;
   EXP.pal={n:groups.length,tot:totKg};EXP.nofit=[...new Set(nofit.map(u=>u.name.replace(" (brut)","")))];
   let h=groups.length?`<h2>${groups.length} palette${groups.length>1?"s":""}, ${fmt(totKg)} kg</h2>${note}${body}`:"";
   if(nofit.length)h+=`<p class="err">Trop grand pour une palette : ${[...new Set(nofit.map(u=>u.name.replace(" (brut)","")))].map(esc).join(", ")}.</p>`+devisHtml(nofit);
@@ -420,6 +420,20 @@ view("add");renderList();
 ["maxw","fill","tare","palmin"].forEach(k=>{$(k).value=D.settings[k]});
 $("lo").onclick=async()=>{try{await fetch("/api/logout",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(e){}location.href="login.html"};
 if(D.client&&D.client.name&&$("cl-name")){$("cl-name").textContent=D.client.name;}
+const isImp=D.impersonated||Boolean(sessionStorage.getItem("cubelyx_admin_impersonator")||localStorage.getItem("cubelyx_admin_impersonator"));
+if(isImp){
+  const bar=$("impersonate-bar");if(bar)bar.hidden=false;
+  const uSpan=$("imp-user");if(uSpan)uSpan.textContent=(D.user||"")+(D.client?" ("+D.client.name+")":"");
+  $("adm").hidden=false;
+  const btnExit=$("btn-exit-imp");
+  if(btnExit){
+    btnExit.onclick=async()=>{
+      btnExit.disabled=true;btnExit.textContent="Retour administration…";
+      try{await fetch("/api/exit-impersonate",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"})}catch(e){}
+      location.href="admin.html";
+    };
+  }
+}
 if(D.role==="moderator"){
   $("adm").hidden=false;
 }

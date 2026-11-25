@@ -88,6 +88,7 @@
     ],
     palettes: [
       ["Palette Europe 80X120", 800, 1200, 1600, 20, ""],
+      ["Palette Industrielle 100X120", 1000, 1200, 1600, 25, ""],
       ["Demi-Palette 60X80", 600, 800, 1200, 10, ""],
       ["Palette Perdue 80X120", 800, 1200, 1600, 10, ""]
     ],
@@ -213,6 +214,8 @@
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem("cubelyx_admin_impersonator");
+    localStorage.removeItem("cubelyx_admin_impersonator");
   }
 
   // Intercepteur fetch global
@@ -355,6 +358,21 @@
       return makeResp(200, { ok: true });
     }
 
+    // 5b. /api/exit-impersonate (Retour modérateur depuis le mode test)
+    if (path === "/api/exit-impersonate" && method === "POST") {
+      const adminId = sessionStorage.getItem("cubelyx_admin_impersonator") || localStorage.getItem("cubelyx_admin_impersonator");
+      if (adminId) {
+        const adminUser = store.users.find(u => u.id === adminId && u.role === "moderator");
+        if (adminUser) {
+          setSession(adminUser.id, true);
+          sessionStorage.removeItem("cubelyx_admin_impersonator");
+          localStorage.removeItem("cubelyx_admin_impersonator");
+          return makeResp(200, { ok: true, admin: adminUser });
+        }
+      }
+      return makeResp(400, { ok: false, message: "Aucune session administrateur à restaurer." });
+    }
+
     // 6. /api/catalog
     if (path.startsWith("/api/catalog")) {
       if (!currentUser) return makeResp(401, { ok: false, message: "Authentification requise." });
@@ -420,13 +438,17 @@
       if (!userPalettes.length) {
         userPalettes = [
           ["Palette Europe 80X120", 800, 1200, 1600, 20, ""],
+          ["Palette Industrielle 100X120", 1000, 1200, 1600, 25, ""],
           ["Demi-Palette 60X80", 600, 800, 1200, 10, ""]
         ];
       }
 
+      const adminId = sessionStorage.getItem("cubelyx_admin_impersonator") || localStorage.getItem("cubelyx_admin_impersonator");
       return makeResp(200, {
         user: currentUser.name,
+        email: currentUser.email,
         role: currentUser.role,
+        impersonated: !!adminId,
         client: { id: client.id, name: client.name, color: client.color || "#4C9AFF" },
         devis_email: client.devis_email || store.moderator_email,
         articles: userArticles,
@@ -484,6 +506,39 @@
       // /api/admin/audit
       if (path === "/api/admin/audit" && method === "GET") {
         return makeResp(200, { ok: true, entries: store.audit || [] });
+      }
+
+      // /api/admin/impersonate (Accès direct interface client sans mot de passe)
+      if (path === "/api/admin/impersonate" && method === "POST") {
+        let targetUser = null;
+        if (body.user_id) {
+          targetUser = store.users.find(u => u.id === body.user_id && u.status === "active");
+        } else if (body.client_id) {
+          targetUser = store.users.find(u => u.client_id === body.client_id && u.status === "active");
+          if (!targetUser) {
+            const cl = store.clients.find(c => c.id === body.client_id);
+            if (cl) {
+              targetUser = {
+                id: "usr_auto_" + cl.id,
+                name: "Test " + cl.name,
+                email: "test@" + cl.name.toLowerCase().replace(/[^a-z0-9]/g, "") + ".local",
+                role: "user",
+                client_id: cl.id,
+                status: "active",
+                created_at: Date.now()
+              };
+              if (!store.users.some(u => u.id === targetUser.id)) {
+                store.users.push(targetUser);
+                saveStore(store);
+              }
+            }
+          }
+        }
+        if (!targetUser) return makeResp(404, { ok: false, message: "Utilisateur ou client introuvable." });
+        sessionStorage.setItem("cubelyx_admin_impersonator", currentUser.id);
+        localStorage.setItem("cubelyx_admin_impersonator", currentUser.id);
+        setSession(targetUser.id, true);
+        return makeResp(200, { ok: true, user: targetUser });
       }
 
       // Actions utilisateurs

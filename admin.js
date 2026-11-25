@@ -15,6 +15,8 @@ $("pclose").onclick=()=>{$("prov").hidden=true;$("pc").textContent=""};
 $("pcopy").onclick=async()=>{try{await navigator.clipboard.writeText($("pc").textContent);$("pcopy").textContent="Copié"}catch(e){$("pcopy").textContent="Sélectionne le code et copie-le"}};
 $("lo").onclick=async()=>{try{await api("POST","/api/logout",{})}catch(e){}location.href="login.html"};
 async function load(){
+  const imp=sessionStorage.getItem("cubelyx_admin_impersonator")||localStorage.getItem("cubelyx_admin_impersonator");
+  if(imp){try{await api("POST","/api/exit-impersonate",{})}catch(e){}}
   clients=(await api("GET","/api/admin/clients")).d.clients||[];
   allUsers=(await api("GET","/api/admin/users")).d.users||[];
   const opts=clients.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
@@ -25,6 +27,7 @@ async function load(){
   const act=allUsers.filter(u=>u.status!=="pending");
   const cn=id=>(clients.find(c=>c.id===id)||{}).name||"–";
   $("usr").innerHTML=act.length?act.map(u=>`<div class="row" data-id="${esc(u.id)}"><div class="t"><b>${esc(u.name)}</b> <span class="muted">${u.role==="moderator"?"(modérateur)":""}</span><br><span class="muted">${esc(u.email)} – Client : <b>${esc(cn(u.client_id))}</b> – ${u.status==="active"?'<span class="ok">actif</span>':'<span class="bad">désactivé</span>'} – dernière connexion : ${fdate(u.last_login)}</span></div>
+    ${u.role==="moderator"?"":`<button type="button" class="p" data-ua="test" data-id="${esc(u.id)}" title="Ouvrir l'application en tant que ${esc(u.name)}">Tester l’interface</button>`}
     <button type="button" data-ua="edit" data-id="${esc(u.id)}">Modifier</button>
     ${u.role==="moderator"?"":`<button data-a="reset">Nouveau mot de passe provisoire</button>${u.status==="active"?'<button data-a="disable">Désactiver</button>':'<button data-a="enable">Réactiver</button>'}<button class="d" data-a="delete">Supprimer</button>`}</div>`).join(""):'<p class="muted">Aucun utilisateur.</p>';
   $("cl").innerHTML=clients.length?clients.map(c=>`<div class="row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
@@ -35,7 +38,8 @@ async function load(){
       </div>
       <span class="muted">E-mail devis : <b>${esc(c.devis_email||"non renseigné")}</b> • Couleur interface : <code>${esc(c.color||'#4C9AFF')}</code></span>
     </div>
-    <div style="display:flex;gap:6px;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button type="button" class="p" data-ca="test" data-id="${esc(c.id)}" title="Ouvrir l'application avec le catalogue et les réglages de ${esc(c.name)}">Tester l’interface</button>
       <button type="button" data-ca="edit" data-id="${esc(c.id)}">Modifier</button>
       <button type="button" class="d" data-ca="delete" data-id="${esc(c.id)}">Supprimer</button>
     </div>
@@ -59,7 +63,14 @@ document.addEventListener("click",async e=>{
 
   const ub=e.target.closest("button[data-ua]");
   if(ub){
-    const uaid=ub.dataset.id;
+    const uaid=ub.dataset.id,ua=ub.dataset.ua;
+    if(ua==="test"){
+      ub.disabled=true;ub.textContent="Connexion…";
+      const r=await api("POST","/api/admin/impersonate",{user_id:uaid});
+      if(r.s===200){location.href="app.html"}
+      else{alert(r.d.message||"Erreur de connexion.");ub.disabled=false;ub.textContent="Tester l’interface"}
+      return;
+    }
     const u=allUsers.find(x=>x.id===uaid);
     if(u){
       $("uid").value=u.id;
@@ -79,6 +90,13 @@ document.addEventListener("click",async e=>{
   if(cb){
     const ca=cb.dataset.ca,cid=cb.dataset.id;
     const c=clients.find(x=>x.id===cid);
+    if(ca==="test"&&c){
+      cb.disabled=true;cb.textContent="Connexion…";
+      const r=await api("POST","/api/admin/impersonate",{client_id:cid});
+      if(r.s===200){location.href="app.html"}
+      else{alert(r.d.message||"Erreur de connexion.");cb.disabled=false;cb.textContent="Tester l’interface"}
+      return;
+    }
     if(ca==="edit"&&c){
       $("cid").value=c.id;
       $("cn").value=c.name;
